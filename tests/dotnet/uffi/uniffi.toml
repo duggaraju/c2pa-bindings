@@ -1,0 +1,2 @@
+[bindings.csharp]
+cdylib_name="c2pa_bindings"

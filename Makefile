@@ -8,8 +8,8 @@ CFLAGS = -pthread -Wl,--no-as-needed -ldl -lm
 endif
 
 # default version of python is 3.11
-PYTHON=python3.11
-LIBRARY=libc2pa_bindings.dylib
+PYTHON=python3.12
+LIBRARY=libc2pa_bindings.so
 
 release: 
 	cargo build --release --features=uniffi/cli
@@ -29,6 +29,12 @@ swift: release
 
 test_python: python
 	$(PYTHON) tests/python/test.py
+
+dotnet: release
+	dotnet run --project tests/dotnet/generator/generator.csproj
+
+test_dotnet: dotnet
+	LD_LIBRARY_PATH=target/release RUST_BACKTRACE=full  dotnet run --project tests/dotnet/test/test.csproj
 
 test: test_python test_c
 

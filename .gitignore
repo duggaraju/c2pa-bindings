@@ -11,3 +11,8 @@ Cargo.lock
 .DS_Store
 
 __pycache__/
+
+# C# Files.
+.vs/
+bin/
+obj/

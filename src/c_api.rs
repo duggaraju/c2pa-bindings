@@ -452,7 +452,6 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
         generator: from_c_str(settings.claim_generator),
     };
     let builder = ManifestBuilder::new(&settings);
-    builder.from_json(&json).unwrap();
     match builder.from_json(&json) {
         Ok(_) => Box::into_raw(Box::new(builder)),
         Err(e) => {
