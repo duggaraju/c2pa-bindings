@@ -34,3 +34,25 @@ Run `make test`
 # Note for ssl functionality you may need to update the python ssl package
 
 `pip install pyopenssl cryptography --upgrade`
+
+# Dotnet
+
+## Building
+
+Setting up Dotnet on Windows can be done by following these steps:
+
+1) Open a terminal in this folder (the root)
+2) Referring to the Makefile, run:
+`cargo build --release --features=uniffi/cli`
+`cp ./target/release/c2pa_bindings.dll ./tests/dotnet/test/bin/Debug/net8.0`
+3) Then:
+`dotnet run --project tests/dotnet/generator/generator.csproj`
+4) If on Linux, then run:
+`LD_LIBRARY_PATH=target/release RUST_BACKTRACE=full  dotnet run --project tests/dotnet/test/test.csproj`
+
+5) Now, to build the project:
+
+```sh
+cd ./tests/dotnet/test/
+dotnet build
+```
