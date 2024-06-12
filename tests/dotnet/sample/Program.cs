@@ -15,6 +15,11 @@ internal class Program
         Console.WriteLine("Version: {0}", Sdk.Version);
         Console.WriteLine("Supprted Extensions: {0}", string.Join(",", Sdk.SupportedExtensions));
 
+        if (string.IsNullOrEmpty(inputFile))
+            throw new ArgumentNullException("inputFile", "No filename was provided.");
+        if (!File.Exists(inputFile))
+            throw new IOException($"No file exists with the filename of {inputFile}.");
+
         if (outputFile == null)
             ValidateFile(inputFile);
         else
@@ -68,7 +73,8 @@ internal class Program
 
     private static void ValidateFile(string filename)
     {
-        Console.WriteLine("Reading manifest from file");
+        Console.WriteLine($"Reading manifest from file: {filename}");
+
         var reader = new ManifestStoreReader();
         var store = reader.ReadFromFile(filename);
         if (store != null)
