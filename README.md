@@ -53,7 +53,7 @@ Setting up Dotnet on Windows can be done by following these steps:
 5) Now, to build the project:
 
 ```sh
-cd ./tests/dotnet/test/
+cd ./tests/dotnet/sample/
 dotnet build
 ```
 
