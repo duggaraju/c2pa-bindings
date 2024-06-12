@@ -16,7 +16,7 @@ internal class Program
         Console.WriteLine("Supprted Extensions: {0}", string.Join(",", Sdk.SupportedExtensions));
 
         if (string.IsNullOrEmpty(inputFile))
-            throw new ArgumentNullException("inputFile", "No filename was provided.");
+            throw new ArgumentNullException(nameof(inputFile), "No filename was provided.");
         if (!File.Exists(inputFile))
             throw new IOException($"No file exists with the filename of {inputFile}.");
 

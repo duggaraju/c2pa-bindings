@@ -56,3 +56,12 @@ Setting up Dotnet on Windows can be done by following these steps:
 cd ./tests/dotnet/test/
 dotnet build
 ```
+
+## Running
+
+To run the project, be sure to have the Azure-CLI installed.
+
+```sh
+az login
+dotnet run
+```
