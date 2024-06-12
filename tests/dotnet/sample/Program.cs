@@ -17,7 +17,7 @@ internal class Program
 
         if (outputFile == null)
             ValidateFile(inputFile);
-        else 
+        else
             SignFile(inputFile, outputFile);
     }
 
@@ -103,7 +103,7 @@ class KeyVaultSigner : SignerCallback
         var client = new SecretClient(new Uri(KeyVaultUri), _credential);
         KeyVaultSecret secret = client.GetSecretAsync(SecretName).Result;
         return secret.Value!;
-    } 
+    }
 
     public int Sign(ReadOnlySpan<byte> data, Span<byte> hash)
     {

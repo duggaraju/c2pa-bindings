@@ -159,7 +159,7 @@ namespace C2pa
         }
     }
 
-    internal class ManifestStoreReader
+    public class ManifestStoreReader
     {
         public unsafe ManifestStore? ReadFromFile(string path)
         {
