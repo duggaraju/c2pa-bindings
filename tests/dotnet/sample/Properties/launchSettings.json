@@ -2,9 +2,9 @@
   "profiles": {
     "test": {
       "commandName": "Project",
-      "commandLineArgs": "--input-file C:\\temp\\AI-text.png --output-file C:\\temp\\output.png",
+      "commandLineArgs": "--input-file ..\\..\\..\\sample_images\\sample1.jpg --output-file ..\\..\\..\\sample_images\\output.jpg",
       "environmentVariables": {
-        "PATH": "D:\\GitHub\\c2pa-bindings\\target\\release"
+        "PATH": "..\\..\\..\\..\\..\\..\\target\\release"
       }
     },
     "WSL": {

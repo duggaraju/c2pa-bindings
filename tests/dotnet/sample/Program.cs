@@ -28,15 +28,16 @@ internal class Program
 
     private static void SignFile(string inputFile, string outputFile)
     {
+        string extension = Path.GetExtension(inputFile).Substring(1);
         //var signer = new OpenSslSigner();
-        var signer = new KeyVaultSigner(new DefaultAzureCredential());
+        var signer = new KeyVaultSigner(new DefaultAzureCredential(true));
 
         var settings = new ManifestBuilderSettings
         {
             ClaimGenerator = "C# Binding test"
         };
 
-        var manifestDefinition = """
+        var manifestDefinition = $$"""
 {
     "claim_generator": "C# test",
     "claim_generator_info": [
@@ -45,7 +46,7 @@ internal class Program
             "version": "0.0.1"
         }
     ],
-    "format": "image/png",
+    "format": "{{extension}}",
     "title": "C# Test Image",
     "ingredients": [],
     "assertions": [
