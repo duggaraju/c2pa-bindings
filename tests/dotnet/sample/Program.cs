@@ -39,7 +39,6 @@ internal class Program
 
         var manifestDefinition = $$"""
 {
-    "claim_generator": "C# test",
     "claim_generator_info": [
         {
             "name": "C# test",
