@@ -17,6 +17,11 @@ namespace C2pa
             c2pa.C2paReleaseString(ptr);
             return value;
         }
+
+        public static bool FilePathValid(string path)
+        {
+            return !string.IsNullOrEmpty(path) && System.IO.File.Exists(path);
+        }
     }
 
     unsafe sealed class StreamAdapter : StreamContext
@@ -152,6 +157,10 @@ namespace C2pa
 
         public void Sign(string input, string output)
         {
+            if (!Utils.FilePathValid(input) || !Utils.FilePathValid(output))
+            {
+                throw new ArgumentException("Invalid file path provided.", nameof(input));
+            }
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
             var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
@@ -163,6 +172,10 @@ namespace C2pa
     {
         public unsafe ManifestStore? ReadFromFile(string path)
         {
+            if (!Utils.FilePathValid(path))
+            {
+                throw new ArgumentException("Invalid file path provided.", nameof(path));
+            }
             using var adapter = new StreamAdapter(new FileStream(path, FileMode.Open));
             var c2paStream = adapter.CreateStream();
             var json = Utils.FromCString(c2pa.C2paVerifyStream(c2paStream));
