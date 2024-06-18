@@ -5,7 +5,7 @@ using C2pa.Bindings;
 namespace C2pa
 {
 
-    static class Utils
+    public static class Utils
     {
         public unsafe static string FromCString(sbyte* ptr)
         {
@@ -21,6 +21,37 @@ namespace C2pa
         public static bool FilePathValid(string path)
         {
             return !string.IsNullOrEmpty(path) && System.IO.File.Exists(path);
+        }
+
+        public static string GetManifestDefinitionTemplate(string claimName, string title, string authorName) {
+            var manifestDefinition = $$"""
+                {
+                    "claim_generator_info": [
+                        {
+                            "name": "{{claimName}}",
+                            "version": "0.0.1"
+                        }
+                    ],
+                    "format": "*",
+                    "title": "{{title}}",
+                    "ingredients": [],
+                    "assertions": [
+                        {   "label": "stds.schema-org.CreativeWork",
+                            "data": {
+                                "@context": "http://schema.org/",
+                                "@type": "CreativeWork",
+                                "author": [
+                                    {   "@type": "Person",
+                                        "name": "{{authorName}}"
+                                    }
+                                ]
+                            },
+                            "kind": "Json"
+                        }
+                    ]
+                }
+            """;
+            return manifestDefinition;
         }
     }
 
@@ -157,7 +188,7 @@ namespace C2pa
 
         public void Sign(string input, string output)
         {
-            if (!Utils.FilePathValid(input) || !Utils.FilePathValid(output))
+            if (!Utils.FilePathValid(input))
             {
                 throw new ArgumentException("Invalid file path provided.", nameof(input));
             }
