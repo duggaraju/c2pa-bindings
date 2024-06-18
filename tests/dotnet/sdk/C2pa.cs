@@ -102,32 +102,13 @@ namespace C2pa
         }
     }
 
-    public class AuthorInfo
-    {
-        public string Type { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-    }
+    public record AuthorInfo(string Type = "", string Name = "");
 
-    public class AssertionData
-    {
-        public string? Context { get; set; }
+    public record AssertionData(string? Context, string? Type, AuthorInfo[] Author);
 
-        public string? Type { get; set; }
+    public record Assertion(string Label, AssertionData Data);
 
-        public AuthorInfo[] Author { get; set; } = Array.Empty<AuthorInfo>();
-    }
-
-    public class Assertion
-    {
-        public string Label { get; set; } = string.Empty;
-
-        public AssertionData Data { get; set; } = new AssertionData();
-    }
-
-    public class ClaimGeneratorInfoData {
-        public string Name { get; set; } = string.Empty;
-        public string Version { get; set; } = string.Empty;
-    }
+    public record ClaimGeneratorInfoData(string Name = "", string Version = "");
 
     public class Manifest
     {
