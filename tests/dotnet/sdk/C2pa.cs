@@ -23,7 +23,7 @@ namespace C2pa
             return !string.IsNullOrEmpty(path) && System.IO.File.Exists(path);
         }
 
-        public static string GetManifestDefinitionTemplate(string claimName, string title, string authorName) {
+        public static string GetManifestDefinitionTemplate(string claimName, string manifestTitle, string authorName, string ext) {
             var manifestDefinition = $$"""
                 {
                     "claim_generator_info": [
@@ -32,8 +32,8 @@ namespace C2pa
                             "version": "0.0.1"
                         }
                     ],
-                    "format": "*",
-                    "title": "{{title}}",
+                    "format": "{{ext}}",
+                    "title": "{{manifestTitle}}",
                     "ingredients": [],
                     "assertions": [
                         {   "label": "stds.schema-org.CreativeWork",
@@ -55,7 +55,7 @@ namespace C2pa
         }
     }
 
-    unsafe sealed class StreamAdapter : StreamContext
+    unsafe class StreamAdapter : StreamContext
     {
         private readonly Stream _stream;
         public StreamAdapter(Stream stream) :
@@ -64,7 +64,7 @@ namespace C2pa
             _stream = stream;
         }
 
-        void Dispose(bool disposing)
+        internal protected override void Dispose(bool disposing, bool callNativeDtor)
         {
             if (disposing)
             {
@@ -102,11 +102,31 @@ namespace C2pa
         }
     }
 
+    public class AuthorInfo
+    {
+        public string Type { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public class AssertionData
+    {
+        public string? Context { get; set; }
+
+        public string? Type { get; set; }
+
+        public AuthorInfo[] Author { get; set; } = Array.Empty<AuthorInfo>();
+    }
+
     public class Assertion
     {
         public string Label { get; set; } = string.Empty;
 
-        public dynamic? Data { get; set; }
+        public AssertionData Data { get; set; } = new AssertionData();
+    }
+
+    public class ClaimGeneratorInfoData {
+        public string Name { get; set; } = string.Empty;
+        public string Version { get; set; } = string.Empty;
     }
 
     public class Manifest
@@ -118,7 +138,7 @@ namespace C2pa
 
         public string ClaimGenerator { get; set; } = string.Empty;
 
-        public object[] ClaimGeneratorInfo { get; set; } = Array.Empty<object>();
+        public ClaimGeneratorInfoData[] ClaimGeneratorInfo { get; set; } = Array.Empty<ClaimGeneratorInfoData>();
 
         public Assertion[] Assertions { get; set; } = Array.Empty<Assertion>();
     }
