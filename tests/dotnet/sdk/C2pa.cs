@@ -23,7 +23,7 @@ namespace C2pa
             return !string.IsNullOrEmpty(path) && System.IO.File.Exists(path);
         }
 
-        public static string GetManifestDefinitionTemplate(string claimName, string manifestTitle, string authorName, string ext) {
+        public static string BuildManifestDefinition(string claimName, string manifestTitle, string authorName, string ext) {
             var manifestDefinition = $$"""
                 {
                     "claim_generator_info": [
@@ -135,6 +135,7 @@ namespace C2pa
     public interface SignerCallback
     {
         int Sign(ReadOnlySpan<byte> data, Span<byte> hash);
+        SignerConfig Config { get; }
     }
 
     public class SignerConfig

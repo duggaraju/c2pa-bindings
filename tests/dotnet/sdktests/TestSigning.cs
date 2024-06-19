@@ -33,7 +33,7 @@ namespace sdktests
 
             ManifestBuilderSettings builderSettings = new ManifestBuilderSettings { ClaimGenerator = "C# Binding Test" };
 
-            string manifestDefinition = Utils.GetManifestDefinitionTemplate("C# Test", "C# Test Image", "Isaiah Carrington", "jpg");
+            string manifestDefinition = Utils.BuildManifestDefinition("C# Test", "C# Test Image", "Isaiah Carrington", "jpg");
 
             ManifestBuilder builder = new(builderSettings, signer.Config, signer, manifestDefinition);
             return builder;

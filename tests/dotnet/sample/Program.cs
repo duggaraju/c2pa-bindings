@@ -30,7 +30,7 @@ internal class Program
     {
         string extension = Path.GetExtension(inputFile).Substring(1);
         //var signer = new OpenSslSigner();
-        var signer = new KeyVaultSigner(new DefaultAzureCredential(true));
+        var signer = new KeyVaultSigners(new DefaultAzureCredential(true));
 
         var settings = new ManifestBuilderSettings
         {
@@ -90,7 +90,7 @@ internal class Program
     }
 }
 
-class KeyVaultSigner : SignerCallback
+class KeyVaultSigners : SignerCallback
 {
     const string KeyVaultUri = "https://kv-8c538cfad6204d9cb88a.vault.azure.net/";
     const string SecretName = "media-provenance-pem";
@@ -99,7 +99,7 @@ class KeyVaultSigner : SignerCallback
 
     private readonly TokenCredential _credential;
 
-    public KeyVaultSigner(TokenCredential credential)
+    public KeyVaultSigners(TokenCredential credential)
     {
         _credential = credential;
     }
