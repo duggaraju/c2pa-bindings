@@ -46,7 +46,7 @@ class Library : ILibrary
         var options = driver.Options;
         options.GeneratorKind = GeneratorKind.CSharp;
         options.Encoding = System.Text.Encoding.UTF8;
-        options.OutputDir = Path.Combine(baseDir, "tests/dotnet/test");
+        options.OutputDir = Path.Combine(baseDir, "tests/dotnet/sdk/Generated");
         options.CheckSymbols = false;
         var module = options.AddModule("C2paBindings");        
         module.IncludeDirs.Add(Path.Combine(baseDir, "tests/c"));
