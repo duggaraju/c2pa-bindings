@@ -79,7 +79,7 @@ namespace sdktests
         }
     }
 
-    class KeyVaultSigner : SignerCallback
+    class KeyVaultSigner : ISignerCallback
     {
         const string KeyVaultUri = "https://kv-8c538cfad6204d9cb88a.vault.azure.net/";
         const string SecretName = "media-provenance-pem";

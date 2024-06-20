@@ -132,7 +132,7 @@ namespace C2pa
     }
 
 
-    public interface SignerCallback
+    public interface ISignerCallback
     {
         int Sign(ReadOnlySpan<byte> data, Span<byte> hash);
         SignerConfig Config { get; }
@@ -170,10 +170,10 @@ namespace C2pa
     public class ManifestBuilder
     {
         private readonly C2pa.Bindings.ManifestBuilder _builder;
-        private readonly SignerCallback _callback;
+        private readonly ISignerCallback _callback;
         private readonly C2paSigner _signer;
 
-        public unsafe ManifestBuilder(ManifestBuilderSettings settings, SignerConfig config, SignerCallback callback, string manifest)
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, SignerConfig config, ISignerCallback callback, string manifest)
         {
             _builder = c2pa.C2paCreateManifestBuilder(settings.Settings, manifest);
             _callback = callback;

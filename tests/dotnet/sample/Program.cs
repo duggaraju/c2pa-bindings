@@ -90,7 +90,7 @@ internal class Program
     }
 }
 
-class KeyVaultSigners : SignerCallback
+class KeyVaultSigners : ISignerCallback
 {
     const string KeyVaultUri = "https://kv-8c538cfad6204d9cb88a.vault.azure.net/";
     const string SecretName = "media-provenance-pem";
@@ -131,7 +131,7 @@ class KeyVaultSigners : SignerCallback
 }
 
 
-class OpenSslSigner : SignerCallback
+class OpenSslSigner : ISignerCallback
 {
     const string KeyFile = "/home/krishndu/rust/c2pa-rs/sdk/tests/fixtures/certs/ps256.pem";
     const string CertFile = "/home/krishndu/rust/c2pa-rs/sdk/tests/fixtures/certs/ps256.pub";
