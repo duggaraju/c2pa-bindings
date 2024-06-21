@@ -1,10 +1,12 @@
 # C# C2PA SDK Sample
 
-This file exists to provide sample documentation and code on how to use the C# SDK.
+This file exists to provide sample documentation and code on how to use the C# C2PA SDK for the signing and content integrity of media files.
 
 ## About the SDK
 
-This C# SDK is meant to serve as a wrapper for the Rust Implmentation of the [C2PA protocol](https://c2pa.org/specifications/specifications/1.0/specs/C2PA_Specification.html). This SDK is designed to serve as an interface for other developers and processes to interact with the SDK using C#.
+This C# SDK is meant to serve as a wrapper for the Rust Implmentation of the [C2PA Specification](https://c2pa.org/specifications/specifications/1.3/index.html). This SDK is designed to serve as an interface for other developers and processes to interact with the SDK using C#.
+
+I recommend reading the [Content Authenticity Initiative](https://opensource.contentauthenticity.org/docs/getting-started/) for a better understanding of the underlying information before using this service.
 
 ## Features
 
@@ -17,7 +19,9 @@ Each of which have examples below and in the specified files.
 
 ### Signing Media
 
-Using the C2PA specification, users will be able to sign a media file (image, video, pdf). This will put what's known as a [manifest](https://c2pa.org/specifications/specifications/1.3/specs/C2PA_Specification.html#_manifests) on the file, which can then be used to track any subsequent changes made, and can be used to verify the integrity of the file.
+Using the C2PA specification, users will be able to sign a media file (image, video, pdf). This will put what's known as a [manifest](https://opensource.contentauthenticity.org/docs/manifest/understanding-manifest) on the file, which can then be used to track any subsequent changes made, and can be used to verify the integrity of the file.
+
+For more information about the manifest, refer to this [CIA C2PA Manifest website](https://opensource.contentauthenticity.org/docs/manifest/understanding-manifest/)
 
 There are several methods for accessing certificates, which may change the implementation of the underlying code, and will be up to the developer's discretion.
 
