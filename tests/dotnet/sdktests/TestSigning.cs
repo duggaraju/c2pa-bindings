@@ -31,12 +31,40 @@ namespace sdktests
         {
             KeyVaultSigner signer = new(new DefaultAzureCredential(true));
 
-            ManifestBuilderSettings builderSettings = new ManifestBuilderSettings { ClaimGenerator = "C# Binding Test" };
+            ManifestBuilderSettings builderSettings = new () { ClaimGenerator = "C# Binding Test" };
 
-            string manifestDefinition = Utils.BuildManifestDefinition("C# Test", "C# Test Image", "Isaiah Carrington", "jpg");
+            Manifest manifest = new ()
+            {
+                Title = "C# Test Image",
+                Format = "jpg",
+                ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
+                Assertions = [ new("stds.schema-org.CreativeWork", new AssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))]
+            };
 
-            ManifestBuilder builder = new(builderSettings, signer.Config, signer, manifestDefinition);
+            ManifestBuilder builder = new(builderSettings, signer.Config, signer, manifest.GetManifestJson());
             return builder;
+        }
+
+        [Fact]
+        public void TestManifestClassStoresManifestDataCorrectly()
+        {
+            // Arrange 
+            string manifestTitle = "C# Test Image";
+            string format = "jpg";
+            ClaimGeneratorInfoData claimInfo = new () { Name = "C# Test", Version = "1.0.0"};
+            AuthorInfo author = new ("Person", "Isaiah Carrington");
+            AssertionData assertionData = new ("http://schema.org", "CreativeWork", [author]);
+            Assertion assertion = new ("stds.schema-org.CreativeWork", assertionData);
+
+            // Act
+
+            Manifest manifest = new () {Title = manifestTitle, Format = format, ClaimGeneratorInfo = [claimInfo], Assertions = [assertion]};
+
+            // Assert
+            Assert.Equal("C# Test Image", manifest.Title);
+            Assert.Equal("C# Test", manifest.ClaimGeneratorInfo[0].Name);
+            Assert.Equal("Isaiah Carrington", manifest.Assertions[0].Data.Author[0].Name);
+            Assert.Equal("jpg", manifest.Format);
         }
 
         [Fact]

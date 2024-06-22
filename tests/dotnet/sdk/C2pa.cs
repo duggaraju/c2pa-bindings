@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using C2pa.Bindings;
 
 namespace C2pa
@@ -21,37 +22,6 @@ namespace C2pa
         public static bool FilePathValid(string path)
         {
             return !string.IsNullOrEmpty(path) && System.IO.File.Exists(path);
-        }
-
-        public static string BuildManifestDefinition(string claimName, string manifestTitle, string authorName, string ext) {
-            var manifestDefinition = $$"""
-                {
-                    "claim_generator_info": [
-                        {
-                            "name": "{{claimName}}",
-                            "version": "0.0.1"
-                        }
-                    ],
-                    "format": "{{ext}}",
-                    "title": "{{manifestTitle}}",
-                    "ingredients": [],
-                    "assertions": [
-                        {   "label": "stds.schema-org.CreativeWork",
-                            "data": {
-                                "@context": "http://schema.org/",
-                                "@type": "CreativeWork",
-                                "author": [
-                                    {   "@type": "Person",
-                                        "name": "{{authorName}}"
-                                    }
-                                ]
-                            },
-                            "kind": "Json"
-                        }
-                    ]
-                }
-            """;
-            return manifestDefinition;
         }
     }
 
@@ -102,26 +72,85 @@ namespace C2pa
         }
     }
 
-    public record AuthorInfo(string Type = "", string Name = "");
+    // Example manifest JSON
+    // {
+    //     "claim_generator_info": [
+    //         {
+    //             "name": "{{claimName}}",
+    //             "version": "0.0.1"
+    //         }
+    //     ],
+    //     "format": "{{ext}}",
+    //     "title": "{{manifestTitle}}",
+    //     "ingredients": [],
+    //     "assertions": [
+    //         {   "label": "stds.schema-org.CreativeWork",
+    //             "data": {
+    //                 "@context": "http://schema.org/",
+    //                 "@type": "CreativeWork",
+    //                 "author": [
+    //                     {   "@type": "Person",
+    //                         "name": "{{authorName}}"
+    //                     }
+    //                 ]
+    //             },
+    //             "kind": "Json"
+    //         }
+    //     ]
+    // }
 
-    public record AssertionData(string? Context, string? Type, AuthorInfo[] Author);
+    public class AuthorInfo(string type, string name)
+    {
+        [JsonPropertyName("@type")]
+        public string Type { get; set; } = type;
 
-    public record Assertion(string Label, AssertionData Data);
+        public string Name { get; set; } = name;
+    }
+
+    public class AssertionData(string? context, string? type, AuthorInfo[] author)
+    {
+        [JsonPropertyName("@context")]
+        public string? Context { get; init; } = context;
+
+        [JsonPropertyName("@type")]
+        public string? Type { get; init; } = type;
+
+        public AuthorInfo[] Author { get; init; } = author;
+    }
+
+
+    public record Assertion(string Label, AssertionData Data, string Kind = "Json");
+
+    public record Ingredient(string Title, string Format, string InstanceId);
 
     public record ClaimGeneratorInfoData(string Name = "", string Version = "");
 
     public class Manifest
     {
+        private readonly JsonSerializerOptions _options;
 
-        public string Title { get; set; } = string.Empty;
-
-        public string Format { get; set; } = string.Empty;
-
-        public string ClaimGenerator { get; set; } = string.Empty;
+        public Manifest () {
+            _options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            };
+        }
 
         public ClaimGeneratorInfoData[] ClaimGeneratorInfo { get; set; } = Array.Empty<ClaimGeneratorInfoData>();
+        
+        public string Format { get; set; } = string.Empty;
+        
+        public string Title { get; set; } = string.Empty;
+
+        public Ingredient[] Ingredients { get; set; } = Array.Empty<Ingredient>();
 
         public Assertion[] Assertions { get; set; } = Array.Empty<Assertion>();
+
+        public string GetManifestJson()
+        {
+            return JsonSerializer.Serialize(this, _options);
+        }
     }
 
     public class ManifestStore

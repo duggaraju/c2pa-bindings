@@ -12,7 +12,7 @@ using Azure.Security.KeyVault.Secrets;
 
 // You will need a signer. The signer should inherit from the SignerCallback Interface as demonstrated:
 
-class KeyVaultSigner : SignerCallback
+class KeyVaultSigner : ISignerCallback
 {
 
     /// <summary>
@@ -98,7 +98,7 @@ public class Demo {
         string inputFileName = "somefile.jpg";
         string outputFileName = "somefile-signed.jpg";
 
-        SignFile(inputFileName, outputFileName);
+        // SignFile(inputFileName, outputFileName);
     }
 
     /// <summary>
@@ -106,26 +106,26 @@ public class Demo {
     /// </summary>
     /// <param name="inputPath"></param>
     /// <param name="outputPath"></param>
-    private static void SignFile(string inputPath, string outputPath) {
-        string extension = Path.GetExtension(inputPath)[1..]; // Will need the extension for the manifest
+    // private static void SignFile(string inputPath, string outputPath) {
+    //     string extension = Path.GetExtension(inputPath)[1..]; // Will need the extension for the manifest
 
-        // Create a new signer
-        KeyVaultSigner signer = new ();
+    //     // Create a new signer
+    //     KeyVaultSigner signer = new ();
 
-        // Will need your settings to build your manifest
-        ManifestBuilderSettings settings = new()
-        {
-            ClaimGenerator = "c2pa"
-        };
+    //     // Will need your settings to build your manifest
+    //     ManifestBuilderSettings settings = new()
+    //     {
+    //         ClaimGenerator = "c2pa"
+    //     };
 
-        // Will then need your manifest defintion.
+    //     // Will then need your manifest defintion.
 
-        string manifestDefinition = C2pa.Utils.BuildManifestDefinition("Claim name", "Title of Manifest", "Name of Author", extension);
+    //     string manifestDefinition = C2pa.Utils.BuildManifestDefinition("Claim name", "Title of Manifest", "Name of Author", extension);
 
-        // With the manifest definition, you can now create a new manifest builder
-        ManifestBuilder builder = new(settings, signer.Config, signer, manifestDefinition);
+    //     // With the manifest definition, you can now create a new manifest builder
+    //     ManifestBuilder builder = new(settings, signer.Config, signer, manifestDefinition);
 
-        // Sign the file
-        builder.Sign(inputPath, outputPath);
-    }
+    //     // Sign the file
+    //     builder.Sign(inputPath, outputPath);
+    // }
 }
