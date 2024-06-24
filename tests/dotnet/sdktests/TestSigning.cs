@@ -5,6 +5,9 @@ using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using Azure.Security.KeyVault.Secrets;
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Runtime.ConstrainedExecution;
+
 
 namespace sdktests
 {
@@ -27,10 +30,8 @@ namespace sdktests
             Assert.Equal("Invalid file path provided. (Parameter 'path')", exc.Message);
         }
 
-        public static ManifestBuilder GetTestBuilder()
+        public static ManifestBuilder GetTestBuilder(ISignerCallback signer)
         {
-            KeyVaultSigner signer = new(new DefaultAzureCredential(true));
-
             ManifestBuilderSettings builderSettings = new () { ClaimGenerator = "C# Binding Test" };
 
             Manifest manifest = new ()
@@ -67,19 +68,31 @@ namespace sdktests
             Assert.Equal("jpg", manifest.Format);
         }
 
-        [Fact]
-        public void TestManifestAddedToFileCorrectly()
+        [Theory]
+        [InlineData("KeyVault")]
+        [InlineData("local")]
+        public void TestManifestAddedToFileCorrectly(string signerType)
         {
             // Arrange
             string inputPath = "C:\\sample\\sample1.jpg";
-            string outputPath = "C:\\sample\\output.jpg";
+            string outputPath = $"C:\\sample\\output_{signerType}.jpg";
 
             if (File.Exists(outputPath))
             {
                 File.Delete(outputPath);
             }
 
-            ManifestBuilder builder = TestSigning.GetTestBuilder();
+            ISignerCallback signer;
+
+            if (signerType == "KeyVault"){
+                signer = new KeyVaultSigner(new DefaultAzureCredential(true));
+            }
+            else
+            {
+                signer = new LocalSigner(@"..\..\..\certs\");
+            }
+
+            ManifestBuilder builder = TestSigning.GetTestBuilder(signer);
 
             // Act
             builder.Sign(inputPath, outputPath);
@@ -106,6 +119,7 @@ namespace sdktests
             Assert.Equal("jpg", manifestJson.Format);
         }
     }
+
 
     class KeyVaultSigner : ISignerCallback
     {
@@ -138,10 +152,40 @@ namespace sdktests
             return result.Signature.Length;
         }
 
-        public SignerConfig Config => new SignerConfig
+        public SignerConfig Config => new ()
         {
             Alg = "ps384",
             Certs = GetCertificates(),
+            TimeAuthorityUrl = "http://timestamp.digicert.com",
+            UseOcsp = false
+        };
+    }
+
+    class LocalSigner : ISignerCallback
+    {
+        public string CertFile { get; } = "ps256.pub";
+        public string PrivateKey { get; } = "ps256.pem";
+
+        public LocalSigner (string rootPath){
+            CertFile = rootPath + CertFile;
+            PrivateKey = rootPath + PrivateKey;
+        }
+
+        public int Sign(ReadOnlySpan<byte> data, Span<byte> hash)
+        {
+            string privateKey = File.ReadAllText(PrivateKey);
+            using RSA rsa = RSA.Create();
+            rsa.ImportFromPem(privateKey);
+            byte[] signature = rsa.SignData(data.ToArray(), HashAlgorithmName.SHA384, RSASignaturePadding.Pkcs1);
+            signature.CopyTo(hash);
+
+            return signature.Length;
+        }
+
+        public SignerConfig Config => new ()
+        {
+            Alg = "ps384",
+            Certs = File.ReadAllText(CertFile),
             TimeAuthorityUrl = "http://timestamp.digicert.com",
             UseOcsp = false
         };
