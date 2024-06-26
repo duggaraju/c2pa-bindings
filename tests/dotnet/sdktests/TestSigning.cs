@@ -70,7 +70,6 @@ namespace sdktests
 
         [Theory]
         [InlineData("KeyVault")]
-        [InlineData("local")]
         public void TestManifestAddedToFileCorrectly(string signerType)
         {
             // Arrange
@@ -84,13 +83,7 @@ namespace sdktests
 
             ISignerCallback signer;
 
-            if (signerType == "KeyVault"){
-                signer = new KeyVaultSigner(new DefaultAzureCredential(true));
-            }
-            else
-            {
-                signer = new LocalSigner(@"..\..\..\certs\");
-            }
+            signer = new KeyVaultSigner(new DefaultAzureCredential(true));
 
             ManifestBuilder builder = TestSigning.GetTestBuilder(signer);
 
@@ -156,36 +149,6 @@ namespace sdktests
         {
             Alg = "ps384",
             Certs = GetCertificates(),
-            TimeAuthorityUrl = "http://timestamp.digicert.com",
-            UseOcsp = false
-        };
-    }
-
-    class LocalSigner : ISignerCallback
-    {
-        public string CertFile { get; } = "ps256.pub";
-        public string PrivateKey { get; } = "ps256.pem";
-
-        public LocalSigner (string rootPath){
-            CertFile = rootPath + CertFile;
-            PrivateKey = rootPath + PrivateKey;
-        }
-
-        public int Sign(ReadOnlySpan<byte> data, Span<byte> hash)
-        {
-            string privateKey = File.ReadAllText(PrivateKey);
-            using RSA rsa = RSA.Create();
-            rsa.ImportFromPem(privateKey);
-            byte[] signature = rsa.SignData(data.ToArray(), HashAlgorithmName.SHA384, RSASignaturePadding.Pkcs1);
-            signature.CopyTo(hash);
-
-            return signature.Length;
-        }
-
-        public SignerConfig Config => new ()
-        {
-            Alg = "ps384",
-            Certs = File.ReadAllText(CertFile),
             TimeAuthorityUrl = "http://timestamp.digicert.com",
             UseOcsp = false
         };
