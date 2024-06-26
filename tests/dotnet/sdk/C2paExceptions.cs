@@ -13,7 +13,4 @@ namespace C2paExceptions {
 
     [Serializable]
     public class C2paException(string message) : Exception(message) { }
-
-    [Serializable]
-    public class ResourceNotFoundException(string message) : Exception(message) { }
 }

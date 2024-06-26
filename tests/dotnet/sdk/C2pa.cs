@@ -17,6 +17,7 @@ namespace C2pa
             }
             var value = Marshal.PtrToStringUTF8(new nint(ptr))!;
             c2pa.C2paReleaseString(ptr);
+            Sdk.CheckError();
             return value;
         }
 
@@ -215,6 +216,7 @@ namespace C2pa
         {
             var span = new ReadOnlySpan<byte>(data, (int)len);
             var hash = new Span<byte>(signature, (int)sig_max_size);
+            Sdk.CheckError();
             return _callback.Sign(span, hash);
         }
 
@@ -253,6 +255,7 @@ namespace C2pa
                 IgnoreReadOnlyProperties = false
             });
             c2pa.C2paReleaseStream(c2paStream);
+            Sdk.CheckError();
             return manifestStore;
         }
 
