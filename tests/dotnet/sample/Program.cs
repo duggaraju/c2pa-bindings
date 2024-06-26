@@ -37,7 +37,17 @@ internal class Program
             ClaimGenerator = "C# Binding test"
         };
 
-        var manifestDefinition = $$"""
+        Manifest manifest = new ()
+        {
+            Title = "C# Test Image",
+            Format = "jpg",
+            ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
+            Assertions = [ new("stds.schema-org.CreativeWork", new AssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))]
+        };
+
+        var manifestDefinition = manifest.GetManifestJson();
+
+        manifestDefinition = $$"""
 {
     "claim_generator_info": [
         {
@@ -47,6 +57,10 @@ internal class Program
     ],
     "format": "{{extension}}",
     "title": "C# Test Image",
+    "thumbnail": {
+        "format": "jpg",
+        "identifier": "1234"
+    },
     "ingredients": [],
     "assertions": [
         {   "label": "stds.schema-org.CreativeWork",

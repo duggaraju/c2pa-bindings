@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using C2pa.Bindings;
+using C2paExceptions;
 
 namespace C2pa
 {
@@ -226,7 +227,7 @@ namespace C2pa
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
             var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
-            Console.WriteLine("Last error is {0} {1}", ret, Sdk.Error);
+            Sdk.CheckError();
         }
     }
 
@@ -278,6 +279,17 @@ namespace C2pa
             }
         }
 
-        public unsafe static string Error => Utils.FromCString(c2pa.C2paError());
+        public unsafe static void CheckError () {
+            string err = Utils.FromCString(c2pa.C2paError());
+            if (string.IsNullOrEmpty(err)) return;
+            
+            string errType = err.Split(' ')[0];
+            string errMsg = err;
+
+            Exception? exception = ExceptionFactory.GetException(errType, errMsg);
+            if (exception != null) {
+                throw exception;
+            }
+        }
     }
 }
