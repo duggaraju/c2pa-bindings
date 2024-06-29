@@ -100,7 +100,7 @@ impl<'a> StreamAdapter<'a> {
 impl<'a> From<&'a dyn Stream> for StreamAdapter<'a> {
     fn from(stream: &'a dyn Stream) -> Self {
         let stream = &*stream as *const dyn Stream as *mut dyn Stream;
-        let stream = unsafe { & *stream };
+        let stream = unsafe { &*stream };
         Self { stream }
     }
 }

@@ -67,6 +67,7 @@ interface ManifestStoreReader {
 
 dictionary ManifestBuilderSettings {
   string generator;
+  string settings;
 };
 
 interface ManifestBuilder {

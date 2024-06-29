@@ -14,9 +14,11 @@ LIBRARY=libc2pa_bindings.so
 release: 
 	cargo build --release --features=uniffi/cli
 
-test_c: release
-	cbindgen --config cbindgen.toml --crate c2pa-bindings --output tests/c/c2pa.h --lang c
-	$(CC) $(CFLAGS) tests/c/main.c -o target/ctest -lc2pa_bindings -L./target/release 
+c_bindings: release
+	cbindgen --config cbindgen.toml --crate c2pa-bindings --output target/c2pa.h --lang c
+
+test_c: c_bindings
+	$(CC) $(CFLAGS) -I target tests/c/main.c -o target/ctest -lc2pa_bindings -L./target/release 
 	LD_LIBRARY_PATH=target/release target/ctest
 
 python: release
@@ -30,7 +32,7 @@ swift: release
 test_python: python
 	$(PYTHON) tests/python/test.py
 
-dotnet: release
+dotnet: c_bindings
 	dotnet run --project tests/dotnet/generator/generator.csproj
 
 test_dotnet: dotnet
