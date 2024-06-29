@@ -14,7 +14,7 @@ using __IntPtr = global::System.IntPtr;
 
 namespace C2pa.Bindings
 {
-    public enum SeekMode : uint
+    public enum SeekMode
     {
         Start = 0,
         End = 1,
@@ -44,7 +44,7 @@ namespace C2pa.Bindings
 
     /// <summary>Defines a callback to seek to an offset in a stream</summary>
     [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
-    public unsafe delegate int SeekCallback(__IntPtr context, long offset, global::C2pa.Bindings.SeekMode mode);
+    public unsafe delegate int SeekCallback(__IntPtr context, int offset, global::C2pa.Bindings.SeekMode mode);
 
     /// <summary>Defines a callback to write to a stream</summary>
     [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
@@ -287,8 +287,8 @@ namespace C2pa.Bindings
             internal __IntPtr time_authority_url;
             internal byte use_ocsp;
 
-            [SuppressUnmanagedCodeSecurity, DllImport("C2paBindings", EntryPoint = "_ZN13SignerConfigCC2ERKS_", CallingConvention = __CallingConvention.Cdecl)]
-            internal static extern void cctor(__IntPtr __instance, __IntPtr _0);
+            [SuppressUnmanagedCodeSecurity, DllImport("C2paBindings", EntryPoint = "??0SignerConfigC@@QEAA@AEBU0@@Z", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern __IntPtr cctor(__IntPtr __instance, __IntPtr _0);
         }
 
         public __IntPtr __Instance { get; protected set; }
@@ -501,8 +501,8 @@ namespace C2pa.Bindings
         [StructLayout(LayoutKind.Sequential, Size = 1)]
         public partial struct __Internal
         {
-            [SuppressUnmanagedCodeSecurity, DllImport("C2paBindings", EntryPoint = "_ZN13StreamContextC2ERKS_", CallingConvention = __CallingConvention.Cdecl)]
-            internal static extern void cctor(__IntPtr __instance, __IntPtr _0);
+            [SuppressUnmanagedCodeSecurity, DllImport("C2paBindings", EntryPoint = "??0StreamContext@@QEAA@AEBU0@@Z", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern __IntPtr cctor(__IntPtr __instance, __IntPtr _0);
         }
 
         public __IntPtr __Instance { get; protected set; }
@@ -613,8 +613,8 @@ namespace C2pa.Bindings
             internal __IntPtr seek_callback;
             internal __IntPtr write_callback;
 
-            [SuppressUnmanagedCodeSecurity, DllImport("C2paBindings", EntryPoint = "_ZN10C2paStreamC2ERKS_", CallingConvention = __CallingConvention.Cdecl)]
-            internal static extern void cctor(__IntPtr __instance, __IntPtr _0);
+            [SuppressUnmanagedCodeSecurity, DllImport("C2paBindings", EntryPoint = "??0C2paStream@@QEAA@AEBU0@@Z", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern __IntPtr cctor(__IntPtr __instance, __IntPtr _0);
         }
 
         public __IntPtr __Instance { get; protected set; }
@@ -776,13 +776,14 @@ namespace C2pa.Bindings
     /// </summary>
     public unsafe partial class ManifestBuilderSettingsC : IDisposable
     {
-        [StructLayout(LayoutKind.Sequential, Size = 8)]
+        [StructLayout(LayoutKind.Sequential, Size = 16)]
         public partial struct __Internal
         {
             internal __IntPtr claim_generator;
+            internal __IntPtr settings;
 
-            [SuppressUnmanagedCodeSecurity, DllImport("C2paBindings", EntryPoint = "_ZN24ManifestBuilderSettingsCC2ERKS_", CallingConvention = __CallingConvention.Cdecl)]
-            internal static extern void cctor(__IntPtr __instance, __IntPtr _0);
+            [SuppressUnmanagedCodeSecurity, DllImport("C2paBindings", EntryPoint = "??0ManifestBuilderSettingsC@@QEAA@AEBU0@@Z", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern __IntPtr cctor(__IntPtr __instance, __IntPtr _0);
         }
 
         public __IntPtr __Instance { get; protected set; }
@@ -802,6 +803,7 @@ namespace C2pa.Bindings
         }
 
         private bool __claim_generator_OwnsNativeMemory = false;
+        private bool __settings_OwnsNativeMemory = false;
         protected bool __ownsNativeInstance;
 
         internal static ManifestBuilderSettingsC __CreateInstance(__IntPtr native, bool skipVTables = false)
@@ -864,6 +866,8 @@ namespace C2pa.Bindings
             *((global::C2pa.Bindings.ManifestBuilderSettingsC.__Internal*) __Instance) = *((global::C2pa.Bindings.ManifestBuilderSettingsC.__Internal*) _0.__Instance);
             if (_0.__claim_generator_OwnsNativeMemory)
                 this.ClaimGenerator = _0.ClaimGenerator;
+            if (_0.__settings_OwnsNativeMemory)
+                this.Settings = _0.Settings;
         }
 
         public void Dispose()
@@ -881,6 +885,8 @@ namespace C2pa.Bindings
             DisposePartial(disposing);
             if (__claim_generator_OwnsNativeMemory)
                 Marshal.FreeHGlobal(((__Internal*)__Instance)->claim_generator);
+            if (__settings_OwnsNativeMemory)
+                Marshal.FreeHGlobal(((__Internal*)__Instance)->settings);
             if (__ownsNativeInstance)
                 Marshal.FreeHGlobal(__Instance);
             __Instance = IntPtr.Zero;
@@ -908,6 +914,31 @@ namespace C2pa.Bindings
                 Marshal.Copy(__bytes0, 0, __bytePtr0, __bytes0.Length);
                 Marshal.WriteByte(__bytePtr0 + __bytes0.Length, 0);
                 ((__Internal*)__Instance)->claim_generator = (__IntPtr) __bytePtr0;
+            }
+        }
+
+        public string Settings
+        {
+            get
+            {
+                return CppSharp.Runtime.MarshalUtil.GetString(global::System.Text.Encoding.UTF8, ((__Internal*)__Instance)->settings);
+            }
+
+            set
+            {
+                if (__settings_OwnsNativeMemory)
+                    Marshal.FreeHGlobal(((__Internal*)__Instance)->settings);
+                __settings_OwnsNativeMemory = true;
+                if (value == null)
+                {
+                    ((__Internal*)__Instance)->settings = global::System.IntPtr.Zero;
+                    return;
+                }
+                var __bytes0 = global::System.Text.Encoding.UTF8.GetBytes(value);
+                var __bytePtr0 = Marshal.AllocHGlobal(__bytes0.Length + 1);
+                Marshal.Copy(__bytes0, 0, __bytePtr0, __bytes0.Length);
+                Marshal.WriteByte(__bytePtr0 + __bytes0.Length, 0);
+                ((__Internal*)__Instance)->settings = (__IntPtr) __bytePtr0;
             }
         }
     }

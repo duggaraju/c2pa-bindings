@@ -4,13 +4,14 @@
       "commandName": "Project",
       "commandLineArgs": "--input-file C:\\temp\\AI-text.png --output-file C:\\temp\\output.png",
       "environmentVariables": {
-        "PATH": "D:\\GitHub\\c2pa-bindings\\target\\release"
+        "PATH": "D:\\GitHub\\c2pa-bindings\\target\\release",
+        "RUST_BACKTRACE": "1"
       }
     },
     "WSL": {
       "commandName": "WSL2",
       "environmentVariables": {
-        "PATH": "D:\\GitHub\\c2pa-bindings\\target\\release"
+        "LD_LIBRARY-PATH": "/mnt/d/GitHub/c2pa-bindings/target/release",
       },
       "distributionName": ""
     }

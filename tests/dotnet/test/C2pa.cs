@@ -42,7 +42,11 @@ namespace C2pa
             return c2pa.C2paCreateStream(this, Read, Seek, Write);
         }
 
+#if LINUX
+        private static int Seek(nint context, long offset, SeekMode mode)
+#else
         private static int Seek(nint context, int offset, SeekMode mode)
+#endif
         {
             var stream = (Stream)GCHandle.FromIntPtr(context).Target!;
             var origin = mode == SeekMode.Start ? SeekOrigin.Begin : mode == SeekMode.Current ? SeekOrigin.Current : SeekOrigin.End;
@@ -123,9 +127,12 @@ namespace C2pa
     {
         public string ClaimGenerator { get; set; } = string.Empty;
 
+        public string TrustSettings { get; set; } = "{}";
+
         public ManifestBuilderSettingsC Settings => new ManifestBuilderSettingsC
         {
-            ClaimGenerator = ClaimGenerator
+            ClaimGenerator = ClaimGenerator,
+            Settings = TrustSettings
         };
     }
 

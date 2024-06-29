@@ -10,12 +10,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.11.4" />
+    <PackageReference Include="Azure.CodeSigning.Sdk" Version="0.1.96" />
+    <PackageReference Include="Azure.Identity" Version="1.12.0" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" Version="4.6.0" />
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.6.0" />
     <PackageReference Include="CppSharp" Version="1.1.5.3168" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="System.CommandLine.DragonFruit" Version="0.4.0-alpha.22272.1" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" />
     <PackageReference Include="System.Text.Json" Version="8.0.3" />
   </ItemGroup>
 </Project>

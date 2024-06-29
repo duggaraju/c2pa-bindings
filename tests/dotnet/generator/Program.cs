@@ -49,7 +49,7 @@ class Library : ILibrary
         options.OutputDir = Path.Combine(baseDir, "tests/dotnet/test");
         options.CheckSymbols = false;
         var module = options.AddModule("C2paBindings");        
-        module.IncludeDirs.Add(Path.Combine(baseDir, "tests/c"));
+        module.IncludeDirs.Add(Path.Combine(baseDir, "target"));
         module.Headers.Add("c2pa.h");
         module.LibraryDirs.Add(Path.Combine(baseDir, "target/release"));
         module.Libraries.Add("c2pa_bindings.dll");

@@ -50,6 +50,7 @@ pub struct StreamContext {
 #[repr(C)]
 pub struct ManifestBuilderSettingsC {
     pub claim_generator: *const c_char,
+    pub settings: *const c_char,
 }
 
 #[repr(C)]
@@ -450,6 +451,7 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
     let json = from_c_str(json);
     let settings = ManifestBuilderSettings {
         generator: from_c_str(settings.claim_generator),
+        settings: from_c_str(settings.settings),
     };
     let builder = ManifestBuilder::new(&settings);
     match builder.from_json(&json) {

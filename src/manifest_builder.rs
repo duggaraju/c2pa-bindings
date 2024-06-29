@@ -13,7 +13,7 @@
 
 use std::{collections::HashMap, sync::RwLock};
 
-use c2pa::{CAIRead, CAIReadWrite, Manifest, Signer};
+use c2pa::{settings, CAIRead, CAIReadWrite, Manifest, Signer};
 
 use crate::{
     stream::{Stream, StreamAdapter},
@@ -22,6 +22,7 @@ use crate::{
 
 pub struct ManifestBuilderSettings {
     pub generator: String,
+    pub settings: String,
 }
 
 trait StreamResolver: Send + Sync {
@@ -40,6 +41,7 @@ impl StreamResolver for StreamTable {
 
 pub struct ManifestBuilder {
     manifest: RwLock<Manifest>,
+    settings: String,
     _resolvers: Vec<Box<dyn StreamResolver>>,
 }
 
@@ -47,6 +49,7 @@ impl ManifestBuilder {
     pub fn new(settings: &ManifestBuilderSettings) -> Self {
         Self {
             manifest: RwLock::new(Manifest::new(settings.generator.clone())),
+            settings: settings.settings.clone(),
             _resolvers: Vec::new(),
         }
     }
@@ -101,6 +104,7 @@ impl ManifestBuilder {
         input: &mut dyn CAIRead,
         output: &mut dyn CAIReadWrite,
     ) -> Result<Vec<u8>> {
+        settings::load_settings_from_str(&self.settings, "json").map_err(C2paError::from)?;
         let mut manifest = self.unlock_write()?;
         let format = manifest.format().to_string();
         manifest
@@ -135,6 +139,7 @@ mod tests {
     fn test_manifest_builder() {
         let settings = ManifestBuilderSettings {
             generator: "test".to_string(),
+            settings: "{}".to_string(),
         };
         let mut builder = ManifestBuilder::new(&settings);
         builder
@@ -160,6 +165,7 @@ mod tests {
     fn test_manifest_builder_with_stream() {
         let settings = ManifestBuilderSettings {
             generator: "test".to_string(),
+            settings: "{}".to_string(),
         };
         let mut builder = ManifestBuilder::new(&settings);
         builder
