@@ -14,8 +14,8 @@
 use std::ffi::{c_char, c_int, c_long, CStr, CString};
 
 use crate::{
-    C2paError, C2paSigner, ManifestBuilder, ManifestBuilderSettings, ManifestStoreReader, SeekMode,
-    SignerConfig, StreamAdapter, StreamError, StreamResult,
+    signer::C2paCustomSigner, C2paError, C2paSigner, ManifestBuilder, ManifestBuilderSettings,
+    ManifestStoreReader, SeekMode, SignerConfig, StreamAdapter, StreamError, StreamResult,
 };
 
 /// Defines a callback to read from a stream
@@ -32,6 +32,13 @@ type WriteCallback =
 
 /// Defines a callback to sign data
 type SignerCallback = unsafe extern "C" fn(
+    data: *mut u8,
+    len: usize,
+    signature: *mut u8,
+    sig_max_size: isize,
+) -> isize;
+
+type TimestamperCallback = unsafe extern "C" fn(
     data: *mut u8,
     len: usize,
     signature: *mut u8,
@@ -156,6 +163,101 @@ pub unsafe extern "C" fn c2pa_create_signer(
             e.set_last();
             std::ptr::null_mut()
         }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_create_custom_signer(
+    signer: SignerCallback,
+    timestamper: TimestamperCallback,
+    config: &SignerConfigC,
+) -> *mut C2paCustomSigner {
+    let config = SignerConfig {
+        alg: from_c_str(config.alg).to_lowercase(),
+        certs: from_c_str(config.certs).into_bytes(),
+        time_authority_url: if config.time_authority_url.is_null() {
+            None
+        } else {
+            Some(from_c_str(config.time_authority_url))
+        },
+        use_ocsp: config.use_ocsp,
+    };
+    let callback = Box::new(CCustomSignerCallback {
+        signer,
+        timestamper,
+    });
+    let signer = C2paCustomSigner::new(callback);
+    match signer.configure(&config) {
+        Ok(_) => Box::into_raw(Box::new(signer)),
+        Err(e) => {
+            e.set_last();
+            std::ptr::null_mut()
+        }
+    }
+}
+
+#[repr(C)]
+/// A C2paSignerCallback defines a signer in C to be called from Rust
+#[derive(Debug)]
+struct CCustomSignerCallback {
+    signer: SignerCallback,
+    timestamper: TimestamperCallback,
+}
+
+impl crate::SignerCallback for CCustomSignerCallback {
+    fn sign(&self, data: Vec<u8>) -> StreamResult<Vec<u8>> {
+        //println!("SignerCallback signing {:p} {}",self, data.len());
+        // We must preallocate the signature buffer to the maximum size
+        // so that it can be filled by the callback
+        let sig_max_size = 100000;
+        let mut signature = vec![0; sig_max_size];
+
+        // This callback returns the size of the signature, if negative it means there was an error
+        let sig: *mut u8 = signature.as_ptr() as *mut u8;
+        let result = unsafe {
+            (self.signer)(
+                data.as_ptr() as *mut u8,
+                data.len(),
+                sig,
+                sig_max_size as isize,
+            )
+        };
+        if result < 0 {
+            // todo: return errors from callback
+            return Err(StreamError::Other {
+                reason: "signer error".to_string(),
+            });
+        }
+        signature.truncate(result as usize);
+
+        Ok(signature)
+    }
+
+    fn timestamp(&self, data: Vec<u8>) -> StreamResult<Option<Vec<u8>>> {
+        let sig_max_size = 100000;
+        let mut signature = vec![0; sig_max_size];
+
+        // This callback returns the size of the signature, if negative it means there was an error
+        let sig: *mut u8 = signature.as_ptr() as *mut u8;
+        let result = unsafe {
+            (self.timestamper)(
+                data.as_ptr() as *mut u8,
+                data.len(),
+                sig,
+                sig_max_size as isize,
+            )
+        };
+        if result < 0 {
+            // todo: return errors from callback
+            return Err(StreamError::Other {
+                reason: "signer error".to_string(),
+            });
+        } else if result == 0 {
+            return Ok(None);
+        }
+        signature.truncate(result as usize);
+
+        Ok(Some(signature))
     }
 }
 
@@ -475,6 +577,35 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
 pub unsafe extern "C" fn c2pa_manifest_builder_sign(
     builder_ptr: *mut *mut ManifestBuilder,
     signer: *const C2paSigner,
+    input: *mut C2paStream,
+    output: *mut C2paStream,
+) -> c_int {
+    let builder = Box::from_raw(*builder_ptr);
+    let mut input_ref = StreamAdapter::from_stream_mut(&mut (*input));
+    let mut output_ref = StreamAdapter::from_stream_mut(&mut (*output));
+    let result = builder.sign(&(*signer), &mut input_ref, &mut output_ref);
+    *builder_ptr = Box::into_raw(builder);
+    match result {
+        Ok(_) => 0,
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+/// Sign using a ManifestBuilder and Custom signer.
+///
+/// # Arguments
+/// * `builder` - a pointer to a ManifestBuilder
+/// * `signer` - a pointer to a C2paCustomSigner
+/// * `input` - a pointer to a C2paStream
+/// * `output` - optional pointer to a C2paStream
+///
+pub unsafe extern "C" fn c2pa_manifest_builder_custom_sign(
+    builder_ptr: *mut *mut ManifestBuilder,
+    signer: *const C2paCustomSigner,
     input: *mut C2paStream,
     output: *mut C2paStream,
 ) -> c_int {

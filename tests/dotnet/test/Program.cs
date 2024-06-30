@@ -77,8 +77,7 @@ internal class Program
 """;
 
         Console.WriteLine("Signing manifest");
-        var config = signer.Config;
-        var builder = new ManifestBuilder(settings, config, signer, manifestDefinition);
+        var builder = new ManifestBuilder(settings, signer, manifestDefinition);
         builder.Sign(inputFile, outputFile);
         Console.WriteLine("Signing successful");
     }
@@ -101,7 +100,7 @@ internal class Program
     }
 }
 
-class TrustedSigner : SignerCallback
+class TrustedSigner : ISignerCallback
 {
     const string EndpointUri = "https://eus.codesigning.azure.net/";
     static readonly Azure.CodeSigning.Models.SignatureAlgorithm Algorithm = Azure.CodeSigning.Models.SignatureAlgorithm.PS384;
@@ -171,7 +170,7 @@ class TrustedSigner : SignerCallback
 
 }
 
-class KeyVaultSigner : SignerCallback
+class KeyVaultSigner : ISignerCallback
 {
     const string KeyVaultUri = "https://kv-8c538cfad6204d9cb88a.vault.azure.net/";
     const string SecretName = "media-provenance-pem";
@@ -213,7 +212,7 @@ class KeyVaultSigner : SignerCallback
 }
 
 
-class LocalSigner: SignerCallback
+class LocalSigner: ISignerCallback
 {
     const string KeyFile = "/home/krishndu/rust/c2pa-rs/sdk/tests/fixtures/certs/ps256.pem";
     const string CertFile = "/home/krishndu/rust/c2pa-rs/sdk/tests/fixtures/certs/ps256.pub";
@@ -256,7 +255,7 @@ class LocalSigner: SignerCallback
 
  }
 
-    class OpenSslSigner : SignerCallback
+    class OpenSslSigner : ISignerCallback
 {
     const string KeyFile = "/home/krishndu/rust/c2pa-rs/sdk/tests/fixtures/certs/ps256.pem";
     const string CertFile = "/home/krishndu/rust/c2pa-rs/sdk/tests/fixtures/certs/ps256.pub";

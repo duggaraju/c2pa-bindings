@@ -129,10 +129,94 @@ impl c2pa::Signer for C2paSigner {
     }
 }
 
+pub struct C2paCustomSigner {
+    callback: Box<dyn SignerCallback>,
+
+    settings: RwLock<SignerInternalConfig>,
+}
+
+impl C2paCustomSigner {
+    pub fn new(callback: Box<dyn SignerCallback>) -> Self {
+        Self {
+            callback,
+            settings: RwLock::new(SignerInternalConfig {
+                alg: c2pa::SigningAlg::Ps256,
+                certs: Vec::new(),
+                reserve_size: 1024,
+                time_authority_url: None,
+                ocsp_val: None,
+            }),
+        }
+    }
+
+    /// Configure the signer with the given config
+    /// # Arguments
+    /// * `config` - the configuration for the signer
+    /// # Returns
+    /// * `Result<()>` - Ok(()) if successful, otherwise an error
+    pub fn configure(&self, config: &SignerConfig) -> Result<()> {
+        if let Ok(mut settings) = RwLock::write(&self.settings) {
+            settings.alg = c2pa::SigningAlg::from_str(&config.alg)
+                .map_err(|e| C2paError::Other(e.to_string()))?;
+            let mut pems =
+                pem::parse_many(&config.certs).map_err(|e| C2paError::Other(e.to_string()))?;
+            settings.certs = pems.drain(..).map(|p| p.into_contents()).collect();
+
+            settings.reserve_size = config.certs.len() as u64 + 20000; /* todo: call out to TSA to get actual timestamp and use that size */
+
+            settings.time_authority_url = config.time_authority_url.clone();
+            settings.ocsp_val = None;
+        } else {
+            return Err(C2paError::Other("RwLock".to_string()));
+        }
+        Ok(())
+    }
+}
+
+impl c2pa::Signer for C2paCustomSigner {
+    fn sign(&self, data: &[u8]) -> c2pa::Result<Vec<u8>> {
+        self.callback
+            .sign(data.to_vec())
+            .map_err(|e| c2pa::Error::BadParam(e.to_string()))
+    }
+
+    fn send_timestamp_request(&self, data: &[u8]) -> Option<c2pa::Result<Vec<u8>>> {
+        let result = self
+            .callback
+            .timestamp(data.to_vec())
+            .map_err(|e| c2pa::Error::BadParam(e.to_string()));
+        match result {
+            Ok(Some(val)) => Some(Ok(val)),
+            Ok(None) => None,
+            Err(e) => Some(Err(e)),
+        }
+    }
+
+    fn alg(&self) -> c2pa::SigningAlg {
+        RwLock::read(&self.settings).unwrap().alg
+    }
+
+    fn certs(&self) -> c2pa::Result<Vec<Vec<u8>>> {
+        Ok(RwLock::read(&self.settings).unwrap().certs.clone())
+    }
+
+    fn reserve_size(&self) -> usize {
+        RwLock::read(&self.settings).unwrap().reserve_size as usize
+    }
+
+    fn ocsp_val(&self) -> Option<Vec<u8>> {
+        RwLock::read(&self.settings).unwrap().ocsp_val.clone()
+    }
+}
+
 /// Defines the callback interface for a signer
 pub trait SignerCallback: Send + Sync {
     /// Read a stream of bytes from the stream
     fn sign(&self, bytes: Vec<u8>) -> StreamResult<Vec<u8>>;
+
+    fn timestamp(&self, _bytes: Vec<u8>) -> StreamResult<Option<Vec<u8>>> {
+        Ok(None)
+    }
 }
 
 #[cfg(test)]

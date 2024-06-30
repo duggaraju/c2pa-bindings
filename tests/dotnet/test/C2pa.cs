@@ -4,6 +4,12 @@ using C2pa.Bindings;
 
 namespace C2pa
 {
+    class C2paException : Exception
+    {
+        public C2paException(string message) : base(message) 
+        {
+        }
+    }
 
     static class Utils
     {
@@ -22,6 +28,7 @@ namespace C2pa
     unsafe sealed class StreamAdapter : StreamContext
     {
         private readonly Stream _stream;
+
         public StreamAdapter(Stream stream) :
             base(GCHandle.ToIntPtr(GCHandle.Alloc(stream)).ToPointer())
         {
@@ -99,9 +106,16 @@ namespace C2pa
     }
 
 
-    public interface SignerCallback
+    public interface ISignerCallback
     {
         int Sign(ReadOnlySpan<byte> data, Span<byte> hash);
+
+        SignerConfig Config { get; }
+    }
+
+    public interface ICustomSignerCallback : ISignerCallback
+    {
+        int Timestamp(ReadOnlySpan<byte> data, Span<byte> hash);
     }
 
     public class SignerConfig
@@ -136,33 +150,69 @@ namespace C2pa
         };
     }
 
-    public class ManifestBuilder
+    public sealed class ManifestBuilder: IDisposable
     {
         private readonly C2pa.Bindings.ManifestBuilder _builder;
-        private readonly SignerCallback _callback;
-        private readonly C2paSigner _signer;
 
-        public unsafe ManifestBuilder(ManifestBuilderSettings settings, SignerConfig config, SignerCallback callback, string manifest)
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, string manifest)
         {
             _builder = c2pa.C2paCreateManifestBuilder(settings.Settings, manifest);
-            _callback = callback;
-            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len); 
-            _signer = c2pa.C2paCreateSigner(c, config.Config);
         }
 
-        unsafe long Sign(byte* data, ulong len, byte* signature, long sig_max_size)
+        public void Dispose()
+        {
+            c2pa.C2paReleaseManifestBuilder(_builder);
+        }
+
+        unsafe static C2paSigner CreateSigner(ISignerCallback callback)
+        {
+            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(callback, data, len, hash, max_len);
+            return c2pa.C2paCreateSigner(c, callback.Config.Config);
+        }
+
+        unsafe static C2paCustomSigner CreateSigner(ICustomSignerCallback callback)
+        {
+            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(callback, data, len, hash, max_len);
+            C2pa.Bindings.TimestamperCallback t = (data, len, hash, max_len) => Timestamp(callback, data, len, hash, max_len);
+            return c2pa.C2paCreateCustomSigner(c, t, callback.Config.Config);
+        }
+
+        unsafe static long Sign(ISignerCallback callback, byte* data, ulong len, byte* signature, long sig_max_size)
         {
             var span = new ReadOnlySpan<byte>(data, (int)len);
             var hash = new Span<byte>(signature, (int)sig_max_size);
-            return _callback.Sign(span, hash);
+            return callback.Sign(span, hash);
         }
 
-        public void Sign(string input, string output)
+        unsafe static long Timestamp(ICustomSignerCallback callback, byte* data, ulong len, byte* signature, long sig_max_size)
+        {
+            var span = new ReadOnlySpan<byte>(data, (int)len);
+            var hash = new Span<byte>(signature, (int)sig_max_size);
+            return callback.Timestamp(span, hash);
+        }
+
+        public void Sign(string input, string output, ISignerCallback callback)
         {
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
-            var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
-            Console.WriteLine("Last error is {0} {1}", ret, Sdk.Error);
+            var signer = CreateSigner(callback);
+            var ret = c2pa.C2paManifestBuilderSign(_builder, signer, inputStream.CreateStream(), outputStream.CreateStream());
+            if (ret != 0)
+            {
+                throw new C2paException(Sdk.Error);
+            }
+        }
+
+        public void Sign(string input, string output, ICustomSignerCallback callback)
+        {
+            using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
+            using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
+            var signer = CreateSigner(callback);
+            var ret = c2pa.C2paManifestBuilderCustomSign(_builder, signer, inputStream.CreateStream(), outputStream.CreateStream());
+            if (ret != 0)
+            {
+                throw new C2paException(Sdk.Error);
+            }
         }
     }
 
@@ -210,6 +260,6 @@ namespace C2pa
             }
         }
 
-        public unsafe static string Error => Utils.FromCString(c2pa.C2paError());
+        internal unsafe static string Error => Utils.FromCString(c2pa.C2paError());
     }
 }

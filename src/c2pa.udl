@@ -93,6 +93,9 @@ dictionary SignerConfig {
 callback interface SignerCallback {
   [Throws=StreamError]
   bytes sign(bytes data);
+
+  [Throws=StreamError]
+  bytes? timestamp(bytes data);
 };
 
 interface C2paSigner {

@@ -21,6 +21,8 @@ thiserror = "1.0"
 uniffi = "0.27.2"
 pem = "3.0.2"
 
+[dev-dependencies]
+c2pa = { version="0.32.1", features = [ "add_thumbnails", "openssl_sign"]}
 [build-dependencies]
 uniffi = { version = "0.27.2", features = [ "build", "cli"] }
 

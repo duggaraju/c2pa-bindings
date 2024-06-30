@@ -37,6 +37,9 @@ namespace C2pa.Bindings
     /// <para>use_ocsp: true,</para>
     /// <para>};</para>
     /// </remarks>
+    [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
+    public unsafe delegate long TimestamperCallback(byte* data, ulong len, byte* signature, long sig_max_size);
+
     /// <summary>An Opaque struct to hold a context value for the stream callbacks</summary>
     /// <summary>Defines a callback to read from a stream</summary>
     [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
@@ -55,6 +58,76 @@ namespace C2pa.Bindings
     /// <para>Configuration settings for the ManifestBuilder</para>
     /// <para>this is mostly a placeholder for future expansion</para>
     /// </summary>
+    public unsafe partial class C2paCustomSigner
+    {
+        public partial struct __Internal
+        {
+        }
+
+        public __IntPtr __Instance { get; protected set; }
+
+        internal static readonly new global::System.Collections.Concurrent.ConcurrentDictionary<IntPtr, global::C2pa.Bindings.C2paCustomSigner> NativeToManagedMap =
+            new global::System.Collections.Concurrent.ConcurrentDictionary<IntPtr, global::C2pa.Bindings.C2paCustomSigner>();
+
+        internal static void __RecordNativeToManagedMapping(IntPtr native, global::C2pa.Bindings.C2paCustomSigner managed)
+        {
+            NativeToManagedMap[native] = managed;
+        }
+
+        internal static bool __TryGetNativeToManagedMapping(IntPtr native, out global::C2pa.Bindings.C2paCustomSigner managed)
+        {
+    
+            return NativeToManagedMap.TryGetValue(native, out managed);
+        }
+
+        protected bool __ownsNativeInstance;
+
+        internal static C2paCustomSigner __CreateInstance(__IntPtr native, bool skipVTables = false)
+        {
+            if (native == __IntPtr.Zero)
+                return null;
+            return new C2paCustomSigner(native.ToPointer(), skipVTables);
+        }
+
+        internal static C2paCustomSigner __GetOrCreateInstance(__IntPtr native, bool saveInstance = false, bool skipVTables = false)
+        {
+            if (native == __IntPtr.Zero)
+                return null;
+            if (__TryGetNativeToManagedMapping(native, out var managed))
+                return (C2paCustomSigner)managed;
+            var result = __CreateInstance(native, skipVTables);
+            if (saveInstance)
+                __RecordNativeToManagedMapping(native, result);
+            return result;
+        }
+
+        internal static C2paCustomSigner __CreateInstance(__Internal native, bool skipVTables = false)
+        {
+            return new C2paCustomSigner(native, skipVTables);
+        }
+
+        private static void* __CopyValue(__Internal native)
+        {
+            var ret = Marshal.AllocHGlobal(sizeof(__Internal));
+            *(__Internal*) ret = native;
+            return ret.ToPointer();
+        }
+
+        private C2paCustomSigner(__Internal native, bool skipVTables = false)
+            : this(__CopyValue(native), skipVTables)
+        {
+            __ownsNativeInstance = true;
+            __RecordNativeToManagedMapping(__Instance, this);
+        }
+
+        protected C2paCustomSigner(void* native, bool skipVTables = false)
+        {
+            if (native == null)
+                return;
+            __Instance = new __IntPtr(native);
+        }
+    }
+
     public unsafe partial class C2paSigner
     {
         public partial struct __Internal
@@ -950,6 +1023,9 @@ namespace C2pa.Bindings
             [SuppressUnmanagedCodeSecurity, DllImport("c2pa_bindings", EntryPoint = "c2pa_create_signer", CallingConvention = __CallingConvention.Cdecl)]
             internal static extern __IntPtr C2paCreateSigner(__IntPtr signer, __IntPtr config);
 
+            [SuppressUnmanagedCodeSecurity, DllImport("c2pa_bindings", EntryPoint = "c2pa_create_custom_signer", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern __IntPtr C2paCreateCustomSigner(__IntPtr signer, __IntPtr timestamper, __IntPtr config);
+
             [SuppressUnmanagedCodeSecurity, DllImport("c2pa_bindings", EntryPoint = "c2pa_error", CallingConvention = __CallingConvention.Cdecl)]
             internal static extern sbyte* C2paError();
 
@@ -980,6 +1056,9 @@ namespace C2pa.Bindings
             [SuppressUnmanagedCodeSecurity, DllImport("c2pa_bindings", EntryPoint = "c2pa_manifest_builder_sign", CallingConvention = __CallingConvention.Cdecl)]
             internal static extern int C2paManifestBuilderSign(__IntPtr builder_ptr, __IntPtr signer, __IntPtr input, __IntPtr output);
 
+            [SuppressUnmanagedCodeSecurity, DllImport("c2pa_bindings", EntryPoint = "c2pa_manifest_builder_custom_sign", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern int C2paManifestBuilderCustomSign(__IntPtr builder_ptr, __IntPtr signer, __IntPtr input, __IntPtr output);
+
             [SuppressUnmanagedCodeSecurity, DllImport("c2pa_bindings", EntryPoint = "c2pa_release_string", CallingConvention = __CallingConvention.Cdecl)]
             internal static extern void C2paReleaseString(sbyte* s);
 
@@ -999,6 +1078,16 @@ namespace C2pa.Bindings
             var __arg1 = config is null ? __IntPtr.Zero : config.__Instance;
             var ___ret = __Internal.C2paCreateSigner(__arg0, __arg1);
             var __result0 = global::C2pa.Bindings.C2paSigner.__GetOrCreateInstance(___ret, false);
+            return __result0;
+        }
+
+        public static global::C2pa.Bindings.C2paCustomSigner C2paCreateCustomSigner(global::C2pa.Bindings.SignerCallback signer, global::C2pa.Bindings.TimestamperCallback timestamper, global::C2pa.Bindings.SignerConfigC config)
+        {
+            var __arg0 = signer == null ? global::System.IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(signer);
+            var __arg1 = timestamper == null ? global::System.IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(timestamper);
+            var __arg2 = config is null ? __IntPtr.Zero : config.__Instance;
+            var ___ret = __Internal.C2paCreateCustomSigner(__arg0, __arg1, __arg2);
+            var __result0 = global::C2pa.Bindings.C2paCustomSigner.__GetOrCreateInstance(___ret, false);
             return __result0;
         }
 
@@ -1199,6 +1288,25 @@ namespace C2pa.Bindings
             var __arg2 = input is null ? __IntPtr.Zero : input.__Instance;
             var __arg3 = output is null ? __IntPtr.Zero : output.__Instance;
             var ___ret = __Internal.C2paManifestBuilderSign(__arg0, __arg1, __arg2, __arg3);
+            return ___ret;
+        }
+
+        /// <summary>Sign using a ManifestBuilder and Custom signer.</summary>
+        /// <remarks>
+        /// <para># Arguments</para>
+        /// <para>* `builder` - a pointer to a ManifestBuilder</para>
+        /// <para>* `signer` - a pointer to a C2paCustomSigner</para>
+        /// <para>* `input` - a pointer to a C2paStream</para>
+        /// <para>* `output` - optional pointer to a C2paStream</para>
+        /// </remarks>
+        public static int C2paManifestBuilderCustomSign(global::C2pa.Bindings.ManifestBuilder builder_ptr, global::C2pa.Bindings.C2paCustomSigner signer, global::C2pa.Bindings.C2paStream input, global::C2pa.Bindings.C2paStream output)
+        {
+            var ____arg0 = builder_ptr is null ? __IntPtr.Zero : builder_ptr.__Instance;
+            var __arg0 = new __IntPtr(&____arg0);
+            var __arg1 = signer is null ? __IntPtr.Zero : signer.__Instance;
+            var __arg2 = input is null ? __IntPtr.Zero : input.__Instance;
+            var __arg3 = output is null ? __IntPtr.Zero : output.__Instance;
+            var ___ret = __Internal.C2paManifestBuilderCustomSign(__arg0, __arg1, __arg2, __arg3);
             return ___ret;
         }
 
