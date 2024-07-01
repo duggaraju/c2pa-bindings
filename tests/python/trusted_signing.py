@@ -22,6 +22,33 @@ sys.path.append(SOURCE_PATH)
 
 import c2pa_api
 
+
+class TrustedSigner:
+
+    def __init__(self, config, sign_callback):
+        self.credentials = DefaultAzureCredential(exclude_interactive_browser_credential = True)
+        callback = c2pa_api.SignerCallback(sign_callback)
+        self.signer = c2pa_api.C2paSigner(callback)
+        self.signer.configure(config)
+
+    def signer(self):
+        return self.signer
+    
+    def sign(data):
+        accountName = 'accountName'
+        profileName = 'profileName'
+        # use urllib to post to sign the data and return the signed data.
+
+    
+    def get_certs():
+        # Make API call to get certs. Use a dummy random data to make the API call.
+        return '' 
+
+    def default(credentials, url):
+        certs = TrustedSigner.get_certs()
+        config = c2pa.SignerConfig(alg = 'ps384', certs = certs, time_authority_url = 'https://timestamp.digicert.com', use_ocsp = False)
+        return TrustedSignerSigner(config, sign_callback).signer
+
 # paths to our certs
 pemFile = os.path.join(PROJECT_PATH,"tests","fixtures","ps256.pub")
 keyFile = os.path.join(PROJECT_PATH,"tests","fixtures","ps256.pem")
@@ -88,22 +115,18 @@ manifestDefinition = {
     ]
  }
 
-# Define a function that will sign the data using openssl
-# and return the signature as a byte array
-# This could be implemented on a server using an HSM
-def sign_ps256(data: bytes) -> bytes:
-    return c2pa_api.sign_ps256(data, "tests/fixtures/ps256.pem")
-
-# load the public keys from a pem file
-pemFile = os.path.join(PROJECT_PATH,"tests","fixtures","ps256.pub")
-certs = open(pemFile,"rb").read()
-
-# Create a local signer from a certificate pem file
-signer = c2pa_api.LocalSigner.from_settings(sign_ps256, "ps256", certs, "http://timestamp.digicert.com")
+# Create a trusted signer 
+signer = TrustedSigner.default('https://eus.codesigning.azure.net/')
 
 # Example of signing a manifest store into a file
 try:
-    settings = c2pa_api.c2pa.ManifestBuilderSettings(generator = "python-generator", settings = r"{}") 
+    settings = c2pa_api.c2pa.ManifestBuilderSettings(generator = "python-generator", settings = r"""
+    {
+        "trust" : {
+            "trust_config": "1.3.6.1.5.5.7.3.36\n1.3.6.1.4.1.311.76.59.1.9"
+        }
+    }
+    """) 
     c2pa_api.ManifestBuilder.sign_with_files(settings, signer, manifestDefinition, testFile, outFile)
     #builder = c2pa_api.ManifestBuilder(settings, signer, manifestDefinition)
     #c2pa_api.ManifestBuilder.sign(testFile, outFile) 

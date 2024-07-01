@@ -23,8 +23,7 @@ test_c: c_bindings
 
 python: release
 	cargo run --release --features=uniffi/cli --bin uniffi_bindgen generate src/c2pa.udl -n --language python -o target/python
-	cp target/release/$(LIBRARY) target/python/
-
+	cp target/release/$(LIBRARY) target/python/libuniffi_c2pa.so
 swift: release
 	cargo run --release --features=uniffi/cli --bin uniffi_bindgen generate src/c2pa.udl -n --language swift -o target/swift
 	cp target/release/$(LIBRARY) target/swift/
