@@ -16,9 +16,58 @@ using C2paExceptions;
 namespace C2paSample{
     class Program
     {
-        static void Main(string[] args)
+        public static void Main(string inputFile, string? outputFile = null)
         {
+            Console.WriteLine("Version: {0}", Sdk.Version);
+            Console.WriteLine("Supprted Extensions: {0}", string.Join(",", Sdk.SupportedExtensions));
+
+            if (string.IsNullOrEmpty(inputFile))
+                throw new ArgumentNullException(nameof(inputFile), "No filename was provided.");
+            if (!File.Exists(inputFile))
+                throw new IOException($"No file exists with the filename of {inputFile}.");
+
+            if (outputFile == null)
+                ValidateFile(inputFile);
+            else
+                SignFile(inputFile, outputFile);
+        }
+
+        private static void ValidateFile(string inputFile)
+        {
+           return;
+        }
+
+        private static void SignFile(string inputFile, string outputFile)
+        {
+            TokenCredential credential = new DefaultAzureCredential(true);
+            TrustedSigner signer = new (credential);
             
+            ManifestBuilderSettings settings = new() 
+            {
+                ClaimGenerator = "C# Binding test",
+                TrustSettings = """
+                {
+                    "trust": {
+                        "trust_config": "1.3.6.1.5.5.7.3.36\n1.3.6.1.4.1.311.76.59.1.9"
+                    },
+                    "verify": {
+                        "verify_after_sign": false
+                    }
+                }
+                """
+            };
+
+            Manifest manifest = new() {
+                ClaimGeneratorInfo = [new ClaimGeneratorInfoData() { Name = "C# Binding test", Version = "1.0.0" }],
+                Format = "jpg",
+                Title = "C# Test Image",
+                Assertions = [ new("stds.schema-org.CreativeWork", new AssertionData("http://schema.org/", "CreativeWork", [new AuthorInfo("person", "Isaiah Carrington")])) ]
+            };
+
+            SignerConfig config = signer.Config;
+
+            ManifestBuilder builder = new(settings, config, signer, manifest.GetManifestJson());
+            builder.Sign(inputFile, outputFile);
         }
 
         class TrustedSigner(TokenCredential credential) : ISignerCallback
