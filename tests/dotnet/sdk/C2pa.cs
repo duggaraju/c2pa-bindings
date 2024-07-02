@@ -17,7 +17,7 @@ namespace C2pa
             }
             var value = Marshal.PtrToStringUTF8(new nint(ptr))!;
             c2pa.C2paReleaseString(ptr);
-            Sdk.CheckError();
+            // Sdk.CheckError();
             return value;
         }
 
