@@ -10,8 +10,9 @@
     },
     "WSL": {
       "commandName": "WSL2",
+      "commandLineArgs": "--input-file /mnt/c/temp/AI-text.png --output-file /tmp/output.png",
       "environmentVariables": {
-        "LD_LIBRARY-PATH": "/mnt/d/GitHub/c2pa-bindings/target/release",
+        "LD_LIBRARY_PATH": "/mnt/d/GitHub/c2pa-bindings/target/release"
       },
       "distributionName": ""
     }
