@@ -6,15 +6,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platform>x64</Platform>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyName>Microsoft.ContentCredentials.Sdk</AssemblyName>
+    <AssemblyName>TIsaiahC.ContentCredentials.Sdk</AssemblyName>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Title>Microsoft Content Credentials SDK</Title>
     <Description>An SDK to certify files with Content Credfentials.</Description>
     <PackageReadmeFile>Readme.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/duggaraju/c2pa-bindings</RepositoryUrl>
     <PackageTags>c2pa content credentials integrity media</PackageTags>
+    <PackageVersion>1.0.0-alpha-2.1</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,7 +29,7 @@
 
   <ItemGroup>
 	<PackageReference Include="CppSharp" Version="1.1.5.3168" />
-    <PackageReference Include="System.Text.Json" Version="8.0.3" />
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
   </ItemGroup>
 
   <ItemGroup>
