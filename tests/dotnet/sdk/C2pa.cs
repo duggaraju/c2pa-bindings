@@ -125,7 +125,7 @@ namespace C2pa
     }
 
 
-    public record Assertion(string Label, AssertionData Data, string Kind = "Json");
+    public record Assertion(string Label, object Data, string Kind = "Json");
 
     public record Ingredient(string Title, string Format, string InstanceId);
 

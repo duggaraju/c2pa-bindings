@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Platform>x64</Platform>
+    <Platforms>AnyCPU;x64</Platforms>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <AssemblyName>TIsaiahC.ContentCredentials.Sdk</AssemblyName>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -19,8 +19,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="docs\README.md" Pack="true" PackagePath="\" />
-    <None Include="..\..\..\target\release\c2pa_bindings.dll" Link="c2pa_bindings.dll">
+    <None Include="..\..\..\target\release\c2pa_bindings.dll" Link="c2pa_bindings.dll" Condition="'$(OS)' == 'Windows_NT'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>true</Pack>
+      <PackagePath>runtimes/win-$(Platform)/native/</PackagePath>
+    </None>
+    <None Include="../../../target/release/libc2pa_bindings.so" Link="libc2pa_bindings.so" Condition="'$(OS)' != 'Windows_NT'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>true</Pack>
 	    <PackagePath>runtimes/win-$(Platform)/native/</PackagePath>

@@ -64,7 +64,7 @@ namespace sdktests
             // Assert
             Assert.Equal("C# Test Image", manifest.Title);
             Assert.Equal("C# Test", manifest.ClaimGeneratorInfo[0].Name);
-            Assert.Equal("Isaiah Carrington", manifest.Assertions[0].Data.Author[0].Name);
+            Assert.Equal("Isaiah Carrington", (manifest.Assertions[0].Data as AssertionData).Author[0].Name);
             Assert.Equal("jpg", manifest.Format);
         }
 
@@ -108,7 +108,7 @@ namespace sdktests
 
             Assert.Equal("C# Test Image", manifestJson.Title);
             Assert.Equal("C# Test", manifestJson.ClaimGeneratorInfo[0].Name);
-            Assert.Equal("Isaiah Carrington", manifestJson.Assertions[0].Data.Author[0].Name);
+            Assert.Equal("Isaiah Carrington", (manifestJson.Assertions[0].Data as AssertionData).Author[0].Name);
             Assert.Equal("jpg", manifestJson.Format);
         }
     }
