@@ -30,51 +30,13 @@ namespace sdktests
             Assert.Equal("Invalid file path provided. (Parameter 'path')", exc.Message);
         }
 
-        public static ManifestBuilder GetTestBuilder(ISignerCallback signer)
-        {
-            ManifestBuilderSettings builderSettings = new () { ClaimGenerator = "C# Binding Test" };
-
-            Manifest manifest = new ()
-            {
-                Title = "C# Test Image",
-                Format = "jpg",
-                ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
-                Assertions = [ new("stds.schema-org.CreativeWork", new AssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))]
-            };
-
-            ManifestBuilder builder = new(builderSettings, signer.Config, signer, manifest.GetManifestJson());
-            return builder;
-        }
-
-        [Fact]
-        public void TestManifestClassStoresManifestDataCorrectly()
-        {
-            // Arrange 
-            string manifestTitle = "C# Test Image";
-            string format = "jpg";
-            ClaimGeneratorInfoData claimInfo = new () { Name = "C# Test", Version = "1.0.0"};
-            AuthorInfo author = new ("Person", "Isaiah Carrington");
-            AssertionData assertionData = new ("http://schema.org", "CreativeWork", [author]);
-            Assertion assertion = new ("stds.schema-org.CreativeWork", assertionData);
-
-            // Act
-
-            Manifest manifest = new () {Title = manifestTitle, Format = format, ClaimGeneratorInfo = [claimInfo], Assertions = [assertion]};
-
-            // Assert
-            Assert.Equal("C# Test Image", manifest.Title);
-            Assert.Equal("C# Test", manifest.ClaimGeneratorInfo[0].Name);
-            Assert.Equal("Isaiah Carrington", (manifest.Assertions[0].Data as AssertionData).Author[0].Name);
-            Assert.Equal("jpg", manifest.Format);
-        }
-
         [Theory]
         [InlineData("KeyVault")]
         public void TestManifestAddedToFileCorrectly(string signerType)
         {
             // Arrange
-            string inputPath = "C:\\sample\\sample1.jpg";
-            string outputPath = $"C:\\sample\\output_{signerType}.jpg";
+            string inputPath = "..\\..\\..\\test_samples\\signing_sample.jpg";
+            string outputPath = $"..\\..\\..\\test_samples\\output_{signerType}.jpg";
 
             if (File.Exists(outputPath))
             {
@@ -83,12 +45,11 @@ namespace sdktests
 
             ISignerCallback signer;
 
+            // Can perform some logic to test with different signers based off of signerType
             signer = new KeyVaultSigner(new DefaultAzureCredential(true));
 
-            ManifestBuilder builder = TestSigning.GetTestBuilder(signer);
-
             // Act
-            builder.Sign(inputPath, outputPath);
+            TestUtils.CreateSignedFile(inputPath, outputPath, signer);
 
             if (!File.Exists(outputPath)) throw new IOException("Output path was not created.");
 
@@ -103,7 +64,6 @@ namespace sdktests
             var manifestJson = JsonSerializer.Deserialize<Manifest>(manifest);
 
             // Assert
-
             Assert.NotNull(manifestJson);
 
             Assert.Equal("C# Test Image", manifestJson.Title);

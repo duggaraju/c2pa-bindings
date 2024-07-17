@@ -9,15 +9,15 @@ namespace C2pa
 
     public static class Utils
     {
-        public unsafe static string FromCString(sbyte* ptr)
+        public unsafe static string FromCString(sbyte* ptr, bool ownsResource = false)
         {
             if (ptr == null)
             {
                 return string.Empty;
             }
             var value = Marshal.PtrToStringUTF8(new nint(ptr))!;
-            c2pa.C2paReleaseString(ptr);
-            // Sdk.CheckError();
+            if (!ownsResource) c2pa.C2paReleaseString(ptr);
+            
             return value;
         }
 
@@ -125,7 +125,7 @@ namespace C2pa
     }
 
 
-    public record Assertion(string Label, object Data, string Kind = "Json");
+    public record Assertion(string Label, AssertionData Data, string Kind = "Json");
 
     public record Ingredient(string Title, string Format, string InstanceId);
 

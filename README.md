@@ -51,13 +51,4 @@ Setting up Dotnet on Windows can be done by following these steps:
     dotnet run --project tests/dotnet/generator/generator.csproj
     ```
 
-3. Next, build the project
-
-## Running
-
-To run the project, be sure to have the Azure-CLI installed.
-
-```sh
-az login
-dotnet run
-```
+3. Next, build the project.
