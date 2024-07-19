@@ -61,7 +61,8 @@ namespace C2paSample{
                 ClaimGeneratorInfo = [new ClaimGeneratorInfoData() { Name = "C# Binding test", Version = "1.0.0" }],
                 Format = "jpg",
                 Title = "C# Test Image",
-                Assertions = [ new("stds.schema-org.CreativeWork", new AssertionData("http://schema.org/", "CreativeWork", [new AuthorInfo("person", "Isaiah Carrington")])) ]
+                //Assertions = [ new CustomAssertion("stds.schema-org.CreativeWork", new DefaultAssertionData("http://schema.org/", "CreativeWork", [new AuthorInfo("person", "Isaiah Carrington")])) ]
+                Assertions = [ new DefaultAssertion(new DefaultAssertionData("http://schema.org/", "CreativeWork", [new AuthorInfo("person", "Isaiah Carrington")])) ]
             };
 
             SignerConfig config = signer.Config;

@@ -59,17 +59,15 @@ namespace sdktests
             
             Assert.NotNull(store);
 
-            string manifest = JsonSerializer.Serialize(store.Manifests[store.ActiveManifest]);
-
-            var manifestJson = JsonSerializer.Deserialize<Manifest>(manifest);
+            Manifest? manifest = store.Manifests[store.ActiveManifest];
 
             // Assert
-            Assert.NotNull(manifestJson);
+            Assert.NotNull(manifest);
 
-            Assert.Equal("C# Test Image", manifestJson.Title);
-            Assert.Equal("C# Test", manifestJson.ClaimGeneratorInfo[0].Name);
-            Assert.Equal("Isaiah Carrington", (manifestJson.Assertions[0].Data as AssertionData).Author[0].Name);
-            Assert.Equal("jpg", manifestJson.Format);
+            Assert.Equal("C# Test Image", manifest.Title);
+            Assert.Equal("C# Test", manifest.ClaimGeneratorInfo[0].Name);
+            Assert.Equal("Isaiah Carrington", (manifest.Assertions[0].Data as DefaultAssertionData)?.Author[0].Name);
+            Assert.Equal("jpg", manifest.Format);
         }
     }
 

@@ -113,19 +113,19 @@ namespace C2pa
         public string Name { get; set; } = name;
     }
 
-    public class AssertionData(string? context, string? type, AuthorInfo[] author)
-    {
-        [JsonPropertyName("@context")]
-        public string? Context { get; init; } = context;
+    // public class AssertionData(string? context, string? type, AuthorInfo[] author)
+    // {
+    //     [JsonPropertyName("@context")]
+    //     public string? Context { get; init; } = context;
 
-        [JsonPropertyName("@type")]
-        public string? Type { get; init; } = type;
+    //     [JsonPropertyName("@type")]
+    //     public string? Type { get; init; } = type;
 
-        public AuthorInfo[] Author { get; init; } = author;
-    }
+    //     public AuthorInfo[] Author { get; init; } = author;
+    // }
 
 
-    public record Assertion(string Label, AssertionData Data, string Kind = "Json");
+    // public record Assertion(string Label, AssertionData Data, string Kind = "Json");
 
     public record Ingredient(string Title, string Format, string InstanceId);
 
@@ -133,29 +133,19 @@ namespace C2pa
 
     public class Manifest
     {
-        private readonly JsonSerializerOptions _options;
-
-        public Manifest () {
-            _options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            };
-        }
-
         public ClaimGeneratorInfoData[] ClaimGeneratorInfo { get; set; } = Array.Empty<ClaimGeneratorInfoData>();
         
         public string Format { get; set; } = string.Empty;
         
         public string Title { get; set; } = string.Empty;
 
-        public Ingredient[] Ingredients { get; set; } = Array.Empty<Ingredient>();
+        public Ingredient[] Ingredients { get; set; } = [];
 
-        public Assertion[] Assertions { get; set; } = Array.Empty<Assertion>();
+        public List<BaseAssertion> Assertions { get; set; } = [];
 
         public string GetManifestJson()
         {
-            return JsonSerializer.Serialize(this, _options);
+            return JsonSerializer.Serialize(this, BaseAssertion.JsonOptions);
         }
     }
 
@@ -251,17 +241,21 @@ namespace C2pa
             using var adapter = new StreamAdapter(new FileStream(path, FileMode.Open));
             var c2paStream = adapter.CreateStream();
             var json = Utils.FromCString(c2pa.C2paVerifyStream(c2paStream));
+            Sdk.CheckError();
             if (string.IsNullOrEmpty(json))
             {
                 return null;
             }
             // Console.WriteLine("Manifest: {0}", json);
-            var manifestStore = JsonSerializer.Deserialize<ManifestStore>(json, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-                IgnoreReadOnlyProperties = false
-            });
-            c2pa.C2paReleaseStream(c2paStream);
+            ManifestStore? manifestStore = null;
+            Console.WriteLine("Manifest: {0}", json);
+            try {
+                manifestStore = JsonSerializer.Deserialize<ManifestStore>(json, BaseAssertion.JsonOptions);
+            } 
+            finally{
+                c2pa.C2paReleaseStream(c2paStream);
+            }
+
             Sdk.CheckError();
             return manifestStore;
         }
