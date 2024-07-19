@@ -32,9 +32,8 @@ namespace ContentCredentialSigner
             Format = format,
             Title = "C# Test Image",
             Assertions = [
-                //new CustomAssertion("stds.schema-org.CreativeWork",
-                new DefaultAssertion(
-                    new DefaultAssertionData(
+                new CreativeWorkAssertion(
+                    new CreativeWorkAssertionData(
                         "http://schema.org/",
                         "CreativeWork",
                         [

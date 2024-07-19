@@ -30,8 +30,8 @@ namespace C2pa{
                     return typeof(BaseAssertion);
                 case "c2pa.action":
                     return typeof(ActionAssertion);
-                case "default":
-                    return typeof(DefaultAssertion);
+                case "stds.schema-org.CreativeWork":
+                    return typeof(CreativeWorkAssertion);
                 default:
                     return typeof(CustomAssertion);
             }
@@ -98,11 +98,11 @@ namespace C2pa{
         }
     }
 
-    public class DefaultAssertion(DefaultAssertionData data, string kind = "Json") : BaseAssertion("default", data, kind)  {
-        new public DefaultAssertionData Data { get; set; } = data;
+    public class CreativeWorkAssertion(CreativeWorkAssertionData data, string kind = "Json") : BaseAssertion("stds.schema-org.CreativeWork", data, kind)  {
+        new public CreativeWorkAssertionData Data { get; set; } = data;
     }
 
-    public class DefaultAssertionData (string ? context, string ? type, AuthorInfo[] author) : BaseAssertionData
+    public class CreativeWorkAssertionData (string ? context, string ? type, AuthorInfo[] author) : BaseAssertionData
     {
 
         [JsonPropertyName("@context")]
