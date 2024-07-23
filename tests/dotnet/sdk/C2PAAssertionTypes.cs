@@ -2,7 +2,7 @@ using System;
 using System.Dynamic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Xml;
+using System.Text.RegularExpressions;
 
 namespace C2pa{
 
@@ -24,12 +24,19 @@ namespace C2pa{
         }
 
         private static Type GetAssertionTypeFromLabel(string label){
+            
             switch (label)
             {
                 case "base":
                     return typeof(BaseAssertion);
                 case "c2pa.action":
                     return typeof(ActionAssertion);
+                case "c2pa.thumbnail":
+                    return typeof(ThumbnailAssertion);
+                case string s when Regex.IsMatch(s, @"c2pa\.thumbnail\.claim.*"):
+                    return typeof(ClaimThumbnailAssertion);
+                case string s when Regex.IsMatch(s, @"c2pa\.thumbnail\.ingredient.*"):
+                    return typeof(IngredientThumbnailAssertion);
                 case "stds.schema-org.CreativeWork":
                     return typeof(CreativeWorkAssertion);
                 default:
@@ -56,6 +63,23 @@ namespace C2pa{
 
     }
 
+    public class ThumbnailAssertionData : BaseAssertionData {
+        public string Thumbnail { get; set; } = "";
+        public string InstanceID { get; set; } = "";
+    }
+
+    public class ThumbnailAssertion (ThumbnailAssertionData data, string kind = "Json") : BaseAssertion("c2pa.thumbnail", data, kind) {
+        new public ThumbnailAssertionData Data { get; set; } = data;
+    }
+
+    public class ClaimThumbnailAssertion(ThumbnailAssertionData data, string kind = "Json") : BaseAssertion("c2pa.thumbnail.claim", data, kind) {
+        new public ThumbnailAssertionData Data { get; set; } = data;
+    }
+
+    public class IngredientThumbnailAssertion(ThumbnailAssertionData data, string kind = "Json") : BaseAssertion("c2pa.thumbnail.ingredient", data, kind) {
+        new public ThumbnailAssertionData Data { get; set; } = data;
+    }
+
     public class ActionAssertion (ActionAssertionData data, string kind = "Json") : BaseAssertion("c2pa.action", data, kind) {
         new public ActionAssertionData Data { get; set; } = data;
     }
@@ -66,7 +90,7 @@ namespace C2pa{
         public string SoftwareAgent { get; set; } = "";
         public string Changed { get; set; } = "";
         public string InstanceID { get; set; } = "";
-        public List<dynamic> Actors { get; set; } = new List<dynamic>();
+        public List<dynamic> Actors { get; set; } = [];
     }
 
     public class CustomAssertion (string label, dynamic data, string kind = "Json") : BaseAssertion(label, null, kind) {
@@ -83,7 +107,8 @@ namespace C2pa{
 
             foreach (JsonProperty property in element.EnumerateObject())
             {
-                ((IDictionary<string, object>)dataResult)[property.Name] = property.Value.ValueKind switch
+                string propertyName = property.Name.Replace("@", "");
+                ((IDictionary<string, object>)dataResult)[propertyName] = property.Value.ValueKind switch
                 {
                     JsonValueKind.Array => property.Value.EnumerateArray().Select(x => ConvertElementToExpandoObject(x)).ToList(),
                     JsonValueKind.Object => ConvertElementToExpandoObject(property.Value),
@@ -111,7 +136,7 @@ namespace C2pa{
         [JsonPropertyName("@type")]
         public string? Type { get; init; } = type;
 
-        public AuthorInfo[] Author { get; init; } = author;
+        public AuthorInfo[] Authors { get; init; } = author;
     }
 
 }

@@ -246,7 +246,6 @@ namespace C2pa
             {
                 return null;
             }
-            // Console.WriteLine("Manifest: {0}", json);
             ManifestStore? manifestStore = null;
             Console.WriteLine("Manifest: {0}", json);
             try {

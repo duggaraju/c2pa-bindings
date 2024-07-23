@@ -71,9 +71,8 @@ namespace sdktests
             string format = "jpg";
             ClaimGeneratorInfoData claimInfo = new() { Name = "C# Test", Version = "1.0.0" };
             AuthorInfo author = new("Person", "Isaiah Carrington");
-            DefaultAssertionData assertionData = new("http://schema.org", "CreativeWork", [author]);
-            //CustomAssertion assertion = new("stds.schema-org.CreativeWork", assertionData);
-            DefaultAssertion assertion = new(assertionData);
+            CreativeWorkAssertionData assertionData = new("http://schema.org", "CreativeWork", [author]);
+            CreativeWorkAssertion assertion = new(assertionData);
 
             // Act
 
@@ -82,7 +81,7 @@ namespace sdktests
             // Assert
             Assert.Equal("C# Test Image", manifest.Title);
             Assert.Equal("C# Test", manifest.ClaimGeneratorInfo[0].Name);
-            Assert.Equal("Isaiah Carrington", (manifest.Assertions[0].Data as DefaultAssertionData)?.Author[0].Name);
+            Assert.Equal("Isaiah Carrington", (manifest.Assertions[0].Data as CreativeWorkAssertionData)?.Authors[0].Name);
             Assert.Equal("jpg", manifest.Format);
         }
 
@@ -127,8 +126,7 @@ namespace sdktests
                 Title = "C# Test Image",
                 Format = "jpg",
                 ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
-                //Assertions = [new DefaultAssertion("stds.schema-org.CreativeWork", new DefaultAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))]
-                Assertions = [new DefaultAssertion(new DefaultAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))]
+                Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))]
             };
 
             string manifestJson = manifest.GetManifestJson();
