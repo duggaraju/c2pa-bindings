@@ -36,7 +36,7 @@ namespace ContentCredentialSigner
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", contentType);
-                using (var stream = File.OpenWrite(outputFile))
+                using (var stream = File.OpenRead(outputFile))
                     await stream.CopyToAsync(response.Body);
                 return response;
             }
