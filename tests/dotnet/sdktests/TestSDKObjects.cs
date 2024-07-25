@@ -129,9 +129,7 @@ namespace sdktests
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))]
             };
 
-            string manifestJson = manifest.GetManifestJson();
-
-            ManifestBuilder builder = new(builderSettings, signer.Config, signer, manifest.GetManifestJson());
+            ManifestBuilder builder = new(builderSettings, signer, manifest);
             return builder;
         }
 

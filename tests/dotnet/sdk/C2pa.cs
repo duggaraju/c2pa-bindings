@@ -113,20 +113,6 @@ namespace C2pa
         public string Name { get; set; } = name;
     }
 
-    // public class AssertionData(string? context, string? type, AuthorInfo[] author)
-    // {
-    //     [JsonPropertyName("@context")]
-    //     public string? Context { get; init; } = context;
-
-    //     [JsonPropertyName("@type")]
-    //     public string? Type { get; init; } = type;
-
-    //     public AuthorInfo[] Author { get; init; } = author;
-    // }
-
-
-    // public record Assertion(string Label, AssertionData Data, string Kind = "Json");
-
     public record Ingredient(string Title, string Format, string InstanceId);
 
     public record ClaimGeneratorInfoData(string Name = "", string Version = "");
@@ -195,19 +181,32 @@ namespace C2pa
         };
     }
 
-    public class ManifestBuilder
+    public class ManifestBuilder 
     {
-        private readonly C2pa.Bindings.ManifestBuilder _builder;
+        private readonly ManifestBuilderSettings _settings;
         private readonly ISignerCallback _callback;
-        private readonly C2paSigner _signer;
+        private readonly Manifest _manifest;
+        
 
-        public unsafe ManifestBuilder(ManifestBuilderSettings settings, SignerConfig config, ISignerCallback callback, string manifest)
-        {
-            _builder = c2pa.C2paCreateManifestBuilder(settings.Settings, manifest);
+        private C2pa.Bindings.ManifestBuilder? _builder;
+        private C2paSigner? _signer;
+
+        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, Manifest manifest){
+            _settings = settings;
             _callback = callback;
-            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len); 
-            _signer = c2pa.C2paCreateSigner(c, config.Config);
+            _manifest = manifest;
+
+            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
+            _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
         }
+
+        // public unsafe ManifestBuilder(ManifestBuilderSettings settings, SignerConfig config, ISignerCallback callback, string manifest)
+        // {
+        //     _builder = c2pa.C2paCreateManifestBuilder(settings.Settings, manifest);
+        //     _callback = callback;
+        //     C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len); 
+        //     _signer = c2pa.C2paCreateSigner(c, config.Config);
+        // }
 
         unsafe long Sign(byte* data, ulong len, byte* signature, long sig_max_size)
         {
@@ -225,7 +224,9 @@ namespace C2pa
             }
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
+            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _manifest.GetManifestJson());
             var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
+            c2pa.C2paReleaseManifestBuilder(_builder);
             Sdk.CheckError();
         }
     }

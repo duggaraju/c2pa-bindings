@@ -66,7 +66,7 @@ namespace C2paSample{
 
             SignerConfig config = signer.Config;
 
-            ManifestBuilder builder = new(settings, config, signer, manifest.GetManifestJson());
+            ManifestBuilder builder = new(settings, signer, manifest);
             builder.Sign(inputFile, outputFile);
         }
 
