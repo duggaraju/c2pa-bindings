@@ -127,16 +127,29 @@ namespace C2pa{
         new public CreativeWorkAssertionData Data { get; set; } = data;
     }
 
-    public class CreativeWorkAssertionData (string ? context, string ? type, AuthorInfo[] author) : BaseAssertionData
+    public class CreativeWorkAssertionData (string? context = "", string? type = "", AuthorInfo[]? authors = null) : BaseAssertionData
     {
 
         [JsonPropertyName("@context")]
-        public string? Context { get; init; } = context;
+        public string? Context { get; set; } = context;
 
         [JsonPropertyName("@type")]
-        public string? Type { get; init; } = type;
+        public string? Type { get; set; } = type;
 
-        public AuthorInfo[] Authors { get; init; } = author;
+        public AuthorInfo[] Authors { get; set; } = authors ?? [];
     }
+
+    public class CreativeWorkAssertionDatas : BaseAssertionData
+    {
+
+        [JsonPropertyName("@context")]
+        public string? Context { get; set; } = "";
+
+        [JsonPropertyName("@type")]
+        public string? Type { get; set; } = "";
+
+        public AuthorInfo[] Authors { get; set; } = [];
+    }
+
 
 }

@@ -71,7 +71,7 @@ namespace sdktests
         public void TestCustomAssertionCanUseOtherAssertionDataTypesForDataField()
         {
             // Arrange
-            CreativeWorkAssertionData data = new("Some important Context", "Test", [new("Person", "Test Account 1")]);
+            CreativeWorkAssertionData data = new() { Context = "Some important Context", Type = "Test", Authors = [new("Person", "Test Account 1")]};
             CustomAssertion assertion = new("Some Unique Label", data);
 
             // Act
