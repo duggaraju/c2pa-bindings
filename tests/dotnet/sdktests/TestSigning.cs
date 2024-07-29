@@ -74,7 +74,7 @@ namespace sdktests
         public void TestMultipleManifestsAddedToFileAndDeserializedCorrectly()
         {
             // Arrange
-            string inputPath = "..\\..\\..\\test_samples\\output_sample.jpg";
+            string inputPath = "..\\..\\..\\test_samples\\multi_sample.jpg";
             string outputPath1 = "..\\..\\..\\test_samples\\multi_signed.jpg";
             string outputPath2 = "..\\..\\..\\test_samples\\multi_signed2.jpg";
 

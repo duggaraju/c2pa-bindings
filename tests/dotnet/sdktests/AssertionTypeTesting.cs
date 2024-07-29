@@ -181,5 +181,35 @@ namespace sdktests
             Assert.Equal("Person", assertion.Data.Authors[0].Type);
             Assert.IsType<CreativeWorkAssertion>(assertion);
         }
+
+        [Fact]
+        public void TestMultipleDifferentAssertionsAreSerializedAndDeserializedCorrectly()
+        {
+            // Arrange
+            TestUtils.KeyVaultSigner signer = new( new DefaultAzureCredential(true));
+
+            ManifestBuilder builder = new(ManifestBuilder.CreateBuilderSettings("Testing Multi Assertions"), signer);
+            builder.SetTitle("Testing Multi Assertions");
+            builder.SetFormat("jpg");
+            builder.AddAssertion(new ActionAssertion(new("Some Action", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), "Some Software Agent", "Some Changed", "u11245151")));
+            builder.AddAssertion(new CreativeWorkAssertion(new("Test Context", "Creation", [new("Person", "Isaiah"), new("System", "Test Signer")])));
+
+            // Act
+            string json = JsonSerializer.Serialize(builder.GetManifest(), BaseAssertion.JsonOptions);
+
+            Manifest? manifest = JsonSerializer.Deserialize<Manifest>(json, BaseAssertion.JsonOptions);
+
+            // Assert
+            Assert.NotNull(manifest);
+            Assert.Equal("Testing Multi Assertions", manifest.Title);
+            Assert.IsType<ActionAssertion>(manifest.Assertions[0]);
+            Assert.IsType<ActionAssertionData>(manifest.Assertions[0].Data);
+            Assert.Equal("Some Action", (manifest.Assertions[0].Data as ActionAssertionData)?.Action);
+            Assert.IsType<CreativeWorkAssertion>(manifest.Assertions[1]);
+            Assert.IsType<CreativeWorkAssertionData>(manifest.Assertions[1].Data);
+            Assert.Equal("Test Context", (manifest.Assertions[1].Data as CreativeWorkAssertionData)?.Context);
+            Assert.Equal("Isaiah", (manifest.Assertions[1].Data as CreativeWorkAssertionData)?.Authors[0].Name);
+            Assert.Equal("System", (manifest.Assertions[1].Data as CreativeWorkAssertionData)?.Authors[1].Type);
+        }
     }
 }

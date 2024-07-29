@@ -91,7 +91,7 @@ namespace sdktests
             // Arrange
             ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
 
-            string outputPath = TestUtils.CreateSignedFile("../../../test_samples/sample1.jpg", "../../../test_samples/output_sample.jpg", signer);
+            string outputPath = TestUtils.CreateSignedFile("../../../test_samples/space_sample.jpg", "../../../test_samples/output_space_sample.jpg", signer);
 
             // Act
 
