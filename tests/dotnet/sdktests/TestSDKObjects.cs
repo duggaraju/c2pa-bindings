@@ -89,7 +89,7 @@ namespace sdktests
         public void TestManifestReaderReadsAndSerializesManifestCorrectly()
         {
             // Arrange
-            ISignerCallback signer = new KeyVaultSigner(new DefaultAzureCredential(true));
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
 
             string outputPath = TestUtils.CreateSignedFile("../../../test_samples/sample1.jpg", "../../../test_samples/output_sample.jpg", signer);
 
@@ -145,6 +145,46 @@ namespace sdktests
             // Act
             builder.Sign(inputPath, outputPath);
             return outputPath;
+        }
+
+        public class KeyVaultSigner : ISignerCallback
+        {
+            const string KeyVaultUri = "https://kv-8c538cfad6204d9cb88a.vault.azure.net/";
+            const string SecretName = "media-provenance-pem";
+
+            const string KeyName = "media-provenance-sign";
+
+            private readonly TokenCredential _credential;
+
+            public KeyVaultSigner(TokenCredential credential)
+            {
+                _credential = credential;
+            }
+
+            public string GetCertificates()
+            {
+                var client = new SecretClient(new Uri(KeyVaultUri), _credential);
+                KeyVaultSecret secret = client.GetSecretAsync(SecretName).Result;
+                return secret.Value!;
+            }
+
+            public int Sign(ReadOnlySpan<byte> data, Span<byte> hash)
+            {
+                var client = new KeyClient(new Uri(KeyVaultUri), _credential);
+                KeyVaultKey key = client.GetKey(KeyName);
+                var crypto = new CryptographyClient(new Uri(key.Key.Id), _credential);
+                var result = crypto.SignData(SignatureAlgorithm.RS384, data.ToArray());
+                result.Signature.CopyTo(hash);
+                return result.Signature.Length;
+            }
+
+            public SignerConfig Config => new()
+            {
+                Alg = "ps384",
+                Certs = GetCertificates(),
+                TimeAuthorityUrl = "http://timestamp.digicert.com",
+                UseOcsp = false
+            };
         }
 
     }

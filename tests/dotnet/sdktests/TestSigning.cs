@@ -46,7 +46,7 @@ namespace sdktests
             ISignerCallback signer;
 
             // Can perform some logic to test with different signers based off of signerType
-            signer = new KeyVaultSigner(new DefaultAzureCredential(true));
+            signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
 
             // Act
             TestUtils.CreateSignedFile(inputPath, outputPath, signer);
@@ -69,47 +69,52 @@ namespace sdktests
             Assert.Equal("Isaiah Carrington", (manifest.Assertions[0].Data as CreativeWorkAssertionData)?.Authors[0].Name);
             Assert.Equal("jpg", manifest.Format);
         }
+
+        [Fact]
+        public void TestMultipleManifestsAddedToFileAndDeserializedCorrectly()
+        {
+            // Arrange
+            string inputPath = "..\\..\\..\\test_samples\\output_sample.jpg";
+            string outputPath1 = "..\\..\\..\\test_samples\\multi_signed.jpg";
+            string outputPath2 = "..\\..\\..\\test_samples\\multi_signed2.jpg";
+
+            if (File.Exists(outputPath1))
+            {
+                File.Delete(outputPath1);
+            }
+
+            if (File.Exists(outputPath2))
+            {
+                File.Delete(outputPath2);
+            }
+
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
+
+            Manifest manifest1 = new Manifest() { ClaimGeneratorInfo = [new("Dotnet Multi Test", "1.0.0-alpha.1")] ,Title = "Manifest 1", Format = "jpg" } ;
+            ManifestBuilder builder1 = new(new() { ClaimGenerator = "Dotnet Multi Test" }, signer, manifest1);
+            CustomAssertion assertion1 = new("Custom Operation", new { name = "ByteDefender", source = "MicroHard" });
+            builder1.AddAssertion(assertion1);
+
+            Manifest manifest2 = new Manifest() { ClaimGeneratorInfo = [new("Dotnet Multi Test", "1.0.0-alpha.1")] ,Title = "Manifest 2", Format = "jpg" } ;
+            ManifestBuilder builder2 = new(new() { ClaimGenerator = "Dotnet Multi Test" }, signer, manifest2);
+            ActionAssertion assertion2 = new(new () { Action = "A Second Signing", When = "After the first one", SoftwareAgent = "Dotnet SDK", Actors = [ new { name = "Jerry", occupation = "Coder" }] });
+            builder2.AddAssertion(assertion2);
+
+            // Act
+            builder1.Sign(inputPath, outputPath1);
+            builder2.Sign(outputPath1, outputPath2);
+
+            ManifestStoreReader reader = new();
+            ManifestStore? store = reader.ReadFromFile(outputPath2);
+
+
+            // Assert
+            Assert.NotNull(store);
+
+            string active = store.ActiveManifest;
+            Dictionary<string, Manifest> manifests = store.Manifests;
+
+            Assert.Equal(2, manifests.Count);
+        }
     }
-
-
-    class KeyVaultSigner : ISignerCallback
-    {
-        const string KeyVaultUri = "https://kv-8c538cfad6204d9cb88a.vault.azure.net/";
-        const string SecretName = "media-provenance-pem";
-
-        const string KeyName = "media-provenance-sign";
-
-        private readonly TokenCredential _credential;
-
-        public KeyVaultSigner(TokenCredential credential)
-        {
-            _credential = credential;
-        }
-
-        public string GetCertificates()
-        {
-            var client = new SecretClient(new Uri(KeyVaultUri), _credential);
-            KeyVaultSecret secret = client.GetSecretAsync(SecretName).Result;
-            return secret.Value!;
-        }
-
-        public int Sign(ReadOnlySpan<byte> data, Span<byte> hash)
-        {
-            var client = new KeyClient(new Uri(KeyVaultUri), _credential);
-            KeyVaultKey key = client.GetKey(KeyName);
-            var crypto = new CryptographyClient(new Uri(key.Key.Id), _credential);
-            var result = crypto.SignData(SignatureAlgorithm.RS384, data.ToArray());
-            result.Signature.CopyTo(hash);
-            return result.Signature.Length;
-        }
-
-        public SignerConfig Config => new ()
-        {
-            Alg = "ps384",
-            Certs = GetCertificates(),
-            TimeAuthorityUrl = "http://timestamp.digicert.com",
-            UseOcsp = false
-        };
-    }
-
 }
