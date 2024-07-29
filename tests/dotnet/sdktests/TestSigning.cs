@@ -36,7 +36,7 @@ namespace sdktests
         {
             // Arrange
             string inputPath = "..\\..\\..\\test_samples\\signing_sample.jpg";
-            string outputPath = $"..\\..\\..\\test_samples\\output_{signerType}.jpg";
+            string outputPath = $"..\\..\\..\\test_samples\\output_{signerType}_signed.jpg";
 
             if (File.Exists(outputPath))
             {
