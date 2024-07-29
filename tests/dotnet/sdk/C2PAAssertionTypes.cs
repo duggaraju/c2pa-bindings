@@ -6,6 +6,21 @@ using System.Text.RegularExpressions;
 
 namespace C2pa{
 
+    public static partial class Utils{
+        public static object GetAssertionTypeFromLabel(string label){
+            return label switch
+            {
+                "base" => typeof(BaseAssertion),
+                "c2pa.action" => typeof(ActionAssertion),
+                "c2pa.thumbnail" => typeof(ThumbnailAssertion),
+                string s when Regex.IsMatch(s, @"c2pa\.thumbnail\.claim.*") => typeof(ClaimThumbnailAssertion),
+                string s when Regex.IsMatch(s, @"c2pa\.thumbnail\.ingredient.*") => typeof(IngredientThumbnailAssertion),
+                "stds.schema-org.CreativeWork" => typeof(CreativeWorkAssertion),
+                _ => typeof(CustomAssertion),
+            };
+        }
+    }
+
     public class AssertionTypeConverter : JsonConverter<BaseAssertion>
     {
         public override BaseAssertion? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -24,24 +39,7 @@ namespace C2pa{
         }
 
         private static Type GetAssertionTypeFromLabel(string label){
-            
-            switch (label)
-            {
-                case "base":
-                    return typeof(BaseAssertion);
-                case "c2pa.action":
-                    return typeof(ActionAssertion);
-                case "c2pa.thumbnail":
-                    return typeof(ThumbnailAssertion);
-                case string s when Regex.IsMatch(s, @"c2pa\.thumbnail\.claim.*"):
-                    return typeof(ClaimThumbnailAssertion);
-                case string s when Regex.IsMatch(s, @"c2pa\.thumbnail\.ingredient.*"):
-                    return typeof(IngredientThumbnailAssertion);
-                case "stds.schema-org.CreativeWork":
-                    return typeof(CreativeWorkAssertion);
-                default:
-                    return typeof(CustomAssertion);
-            }
+            return Utils.GetAssertionTypeFromLabel(label) as Type ?? throw new JsonException();
         }
     }
 
@@ -84,13 +82,13 @@ namespace C2pa{
         new public ActionAssertionData Data { get; set; } = data;
     }
 
-    public class ActionAssertionData : BaseAssertionData {
-        public string Action { get; set; } = "";
-        public string When { get; set; } = "";
-        public string SoftwareAgent { get; set; } = "";
-        public string Changed { get; set; } = "";
-        public string InstanceID { get; set; } = "";
-        public List<dynamic> Actors { get; set; } = [];
+    public class ActionAssertionData (string action = "", string when = "", string softwareAgent = "", string changed = "", string instanceID = "", List<dynamic>? actors = null) : BaseAssertionData {
+        public string Action { get; set; } = action;
+        public string When { get; set; } = when;
+        public string SoftwareAgent { get; set; } = softwareAgent;
+        public string Changed { get; set; } = changed;
+        public string InstanceID { get; set; } = instanceID;
+        public List<dynamic> Actors { get; set; } = actors ?? [];
     }
 
     public class CustomAssertion (string label, dynamic data, string kind = "Json") : BaseAssertion(label, null, kind) {
@@ -138,18 +136,4 @@ namespace C2pa{
 
         public AuthorInfo[] Authors { get; set; } = authors ?? [];
     }
-
-    public class CreativeWorkAssertionDatas : BaseAssertionData
-    {
-
-        [JsonPropertyName("@context")]
-        public string? Context { get; set; } = "";
-
-        [JsonPropertyName("@type")]
-        public string? Type { get; set; } = "";
-
-        public AuthorInfo[] Authors { get; set; } = [];
-    }
-
-
 }
