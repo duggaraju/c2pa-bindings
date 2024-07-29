@@ -95,10 +95,11 @@ namespace sdktests
             CustomAssertion assertion1 = new("Custom Operation", new { name = "ByteDefender", source = "MicroHard" });
             builder1.AddAssertion(assertion1);
 
-            Manifest manifest2 = new Manifest() { ClaimGeneratorInfo = [new("Dotnet Multi Test", "1.0.0-alpha.1")] ,Title = "Manifest 2", Format = "jpg" } ;
-            ManifestBuilder builder2 = new(new() { ClaimGenerator = "Dotnet Multi Test" }, signer, manifest2);
-            ActionAssertion assertion2 = new(new () { Action = "A Second Signing", When = "After the first one", SoftwareAgent = "Dotnet SDK", Actors = [ new { name = "Jerry", occupation = "Coder" }] });
-            builder2.AddAssertion(assertion2);
+            ManifestBuilder builder2 = new(ManifestBuilder.CreateBuilderSettings("Dotnet Multi Test"), signer);
+            builder2.SetTitle("Manifest 2");
+            builder2.SetFormat("jpg");
+            builder2.AddClaimGeneratorInfo("Dotnet Multi Test", "1.0.0-alpha.1");
+            builder2.AddAssertion(new ActionAssertion(new() { Action = "A Second Signing", When = "After the first one", SoftwareAgent = "Dotnet SDK", Actors = [ new { name = "Jerry", occupation = "Coder" }] }));
 
             // Act
             builder1.Sign(inputPath, outputPath1);

@@ -119,13 +119,13 @@ namespace C2pa
 
     public class Manifest
     {
-        public ClaimGeneratorInfoData[] ClaimGeneratorInfo { get; set; } = Array.Empty<ClaimGeneratorInfoData>();
+        public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
         
         public string Format { get; set; } = string.Empty;
         
         public string Title { get; set; } = string.Empty;
 
-        public Ingredient[] Ingredients { get; set; } = [];
+        public List<Ingredient> Ingredients { get; set; } = [];
 
         public List<BaseAssertion> Assertions { get; set; } = [];
 
@@ -181,12 +181,10 @@ namespace C2pa
         };
     }
 
-    public class ManifestBuilder 
+    public partial class ManifestBuilder 
     {
         private readonly ManifestBuilderSettings _settings;
         private readonly ISignerCallback _callback;
-        private readonly Manifest _manifest;
-        
 
         private C2pa.Bindings.ManifestBuilder? _builder;
         private C2paSigner? _signer;
@@ -195,6 +193,15 @@ namespace C2pa
             _settings = settings;
             _callback = callback;
             _manifest = manifest;
+
+            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
+            _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
+        }
+
+        public unsafe ManifestBuilder ( ManifestBuilderSettings settings, ISignerCallback callback){
+            _settings = settings;
+            _callback = callback;
+            _manifest = new Manifest();
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
