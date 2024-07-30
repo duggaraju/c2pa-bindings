@@ -105,17 +105,21 @@ namespace C2pa
     //     ]
     // }
 
-    public class AuthorInfo(string type, string name)
-    {
-        [JsonPropertyName("@type")]
-        public string Type { get; set; } = type;
 
-        public string Name { get; set; } = name;
+    public class Ingredient(string title = "", string format = "", Relationship relationship = Relationship.None) {
+        public string Title { get; set; } = title;
+        public string Format { get; set; } = format;
+        public Relationship Relationship { get; set; } = relationship;
+        public string DocumentID { get; set; } = "";
+        public string InstanceID { get; set; } = "";
+        public HashedUri? HashedManifestUri { get; set; } = null;
+        public List<ValidationStatus>? ValidationStatus { get; set; } = [];
+        public HashedUri? Thumbnail { get; set; } = null;
+        public HashedUri? Data { get; set; } = null;
+        public string Description { get; set; } = "";
+        public string InformationalUri { get; set; } = "";
     }
 
-    public record Ingredient(string Title, string Format, string InstanceId);
-
-    public record ClaimGeneratorInfoData(string Name = "", string Version = "");
 
     public class Manifest
     {
@@ -209,7 +213,6 @@ namespace C2pa
             Sdk.CheckError();
             return manifestStore;
         }
-
     }
 
     /// <summary>

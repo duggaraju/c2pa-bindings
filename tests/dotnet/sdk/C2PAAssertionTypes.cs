@@ -136,4 +136,12 @@ namespace C2pa{
 
         public AuthorInfo[] Authors { get; set; } = authors ?? [];
     }
+
+    public class AuthorInfo(string type, string name)
+    {
+        [JsonPropertyName("@type")]
+        public string Type { get; set; } = type;
+
+        public string Name { get; set; } = name;
+    }
 }
