@@ -14,7 +14,12 @@ namespace C2pa{
         public byte[] Salt { get; set; } = salt;
     }
 
-    public record ValidationStatus(string code, string url = "", string explanation = "");
+    public class Thumbnail (string format = "", string identifier = ""){
+        public string Format { get; set; } = format;
+        public string Identifier { get; set; } = identifier;
+    }
+
+    public record ValidationStatus(string Code = "", string Url = "", string Explanation = "");
 
     public enum Relationship {
         ParentOf,

@@ -113,6 +113,26 @@ namespace sdktests
             Assert.Equal("C# Test Image", manifest.Title);
         }
 
+        [Fact]
+        public void TestIngrdientSerializedFromManifestCorrectly()
+        {
+            // Arrange 
+            string inputfile = "../../../test_samples/ingredient_sample.jpg";
+
+            ManifestStoreReader reader = new();
+
+            // Act
+            ManifestStore? store = reader.ReadFromFile(inputfile);
+            Assert.NotNull(store);
+
+            Manifest? manifest = store.Manifests[store.ActiveManifest];
+
+            // Assert
+            Assert.NotNull(manifest);
+            Assert.Equal("sample.jpg", manifest.Ingredients[0].Title);
+            Assert.Equal("image/jpeg", manifest.Ingredients[0].Thumbnail?.Format);
+        }
+
     }
 
     public class TestUtils

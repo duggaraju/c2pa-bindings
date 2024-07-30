@@ -114,7 +114,7 @@ namespace C2pa
         public string InstanceID { get; set; } = "";
         public HashedUri? HashedManifestUri { get; set; } = null;
         public List<ValidationStatus>? ValidationStatus { get; set; } = [];
-        public HashedUri? Thumbnail { get; set; } = null;
+        public Thumbnail? Thumbnail { get; set; } = null;
         public HashedUri? Data { get; set; } = null;
         public string Description { get; set; } = "";
         public string InformationalUri { get; set; } = "";
