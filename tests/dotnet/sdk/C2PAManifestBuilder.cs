@@ -48,9 +48,16 @@ namespace C2pa
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
             _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _manifest.GetManifestJson());
+            if (_builder == null)
+            {
+                Sdk.CheckError();
+            }
             var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
             c2pa.C2paReleaseManifestBuilder(_builder);
-            Sdk.CheckError();
+            if (ret != 0)
+            {
+                Sdk.CheckError();
+            }
         }
 
         public static ManifestBuilderSettings CreateBuilderSettings(string claimGenerator, string TrustSettings = "{}"){
