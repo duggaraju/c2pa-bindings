@@ -106,7 +106,7 @@ namespace C2pa
     // }
 
 
-    public class Ingredient(string title = "", string format = "", Relationship relationship = Relationship.ComponentOf) {
+    public class Ingredient(string title = "", string format = "", Relationship relationship = Relationship.parentOf) {
         public string Title { get; set; } = title;
         public string Format { get; set; } = format;
         public Relationship Relationship { get; set; } = relationship;

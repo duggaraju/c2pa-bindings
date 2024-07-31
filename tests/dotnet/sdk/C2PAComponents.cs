@@ -22,9 +22,9 @@ namespace C2pa{
     public record ValidationStatus(string Code = "", string Url = "", string Explanation = "");
 
     public enum Relationship {
-        ParentOf,
-        ComponentOf,
-        InputTo,
+        parentOf,
+        componentOf,
+        inputTo,
     }
 
     // Manifest

@@ -146,7 +146,8 @@ namespace sdktests
                 Title = "C# Test Image",
                 Format = "jpg",
                 ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
-                Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))]
+                Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
+                Ingredients = [new Ingredient("sample.jpg", "image/jpeg", Relationship.parentOf)]
             };
 
             ManifestBuilder builder = new(builderSettings, signer, manifest);
