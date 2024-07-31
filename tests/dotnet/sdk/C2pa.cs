@@ -122,7 +122,7 @@ namespace C2pa
     }
 
 
-    public class Manifest (string format = "image/jpeg")
+    public class Manifest (string format = "application/octet-stream")
     {
         public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
         
@@ -140,13 +140,13 @@ namespace C2pa
         }
     }
 
-    public class ManifestDefinition (string format = "image/jpeg")
+    public class ManifestDefinition (string format = "application/octet-stream")
     {
         public string? Vendor { get; set; } = null;
         public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
         public string? Title { get; set; } = null;
         public string Format { get; set; } = format;
-        public string InstanceID { get; set; } = "default_instance_id";
+        public string InstanceID { get; set; } = ManifestBuilder.GenerateInstanceID();
         public ResourceRef? Thumbnail { get; set; } = null;
         public List<Ingredient> Ingredients { get; set; } = [];
         public List<BaseAssertion> Assertions { get; set; } = [];

@@ -127,5 +127,9 @@ namespace C2pa
         {
             _definition.Ingredients.Add(ingredient);
         }
+        public static string GenerateInstanceID() {
+            return "xmp:iid:" + Guid.NewGuid().ToString();
+        }
     }
+
 }
