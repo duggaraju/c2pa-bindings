@@ -195,7 +195,7 @@ namespace sdktests
             builder.AddAssertion(new CreativeWorkAssertion(new("Test Context", "Creation", [new("Person", "Isaiah"), new("System", "Test Signer")])));
 
             // Act
-            string json = JsonSerializer.Serialize(builder.GetManifest(), BaseAssertion.JsonOptions);
+            string json = JsonSerializer.Serialize(builder.GetManifestDefinition(), BaseAssertion.JsonOptions);
 
             Manifest? manifest = JsonSerializer.Deserialize<Manifest>(json, BaseAssertion.JsonOptions);
 

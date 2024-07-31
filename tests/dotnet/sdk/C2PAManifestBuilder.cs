@@ -13,19 +13,19 @@ namespace C2pa
         private C2pa.Bindings.ManifestBuilder? _builder;
         private C2paSigner? _signer;
 
-        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, Manifest manifest){
+        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition){
             _settings = settings;
             _callback = callback;
-            _definition = JsonSerializer.Deserialize<ManifestDefinition>(manifest.GetManifestJson(), BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
+            _definition = definition;
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
         }
 
-        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition){
+        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintion){
             _settings = settings;
             _callback = callback;
-            _definition = definition;
+            _definition = JsonSerializer.Deserialize<ManifestDefinition>(manifestDefintion, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
@@ -73,7 +73,7 @@ namespace C2pa
             return new ManifestBuilderSettings(){ClaimGenerator = claimGenerator, TrustSettings = TrustSettings};
         }
 
-        public ManifestDefinition GetManifest()
+        public ManifestDefinition GetManifestDefinition()
         {
             return _definition;
         }
@@ -89,7 +89,7 @@ namespace C2pa
             _definition = JsonSerializer.Deserialize<ManifestDefinition>(json, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
         }
 
-        public void FromManifest(ManifestDefinition manifest)
+        public void SetManifestDefinition(ManifestDefinition manifest)
         {
             _definition = manifest;
         }

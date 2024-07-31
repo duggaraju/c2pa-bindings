@@ -57,7 +57,7 @@ namespace C2paSample{
                 """
             };
 
-            Manifest manifest = new() {
+            ManifestDefinition manifest = new() {
                 ClaimGeneratorInfo = [new ClaimGeneratorInfoData() { Name = "C# Binding test", Version = "1.0.0" }],
                 Format = "jpg",
                 Title = "C# Test Image",
