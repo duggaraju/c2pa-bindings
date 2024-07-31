@@ -76,7 +76,7 @@ namespace sdktests
 
             // Act
 
-            Manifest manifest = new() { Title = manifestTitle, Format = format, ClaimGeneratorInfo = [claimInfo], Assertions = [assertion] };
+            ManifestDefinition manifest = new() { Title = manifestTitle, Format = format, ClaimGeneratorInfo = [claimInfo], Assertions = [assertion] };
 
             // Assert
             Assert.Equal("C# Test Image", manifest.Title);
@@ -141,7 +141,7 @@ namespace sdktests
         {
             ManifestBuilderSettings builderSettings = new() { ClaimGenerator = "C# Binding Test" };
 
-            Manifest manifest = new()
+            ManifestDefinition manifest = new()
             {
                 Title = "C# Test Image",
                 Format = "jpg",
