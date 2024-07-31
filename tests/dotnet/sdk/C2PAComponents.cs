@@ -25,7 +25,6 @@ namespace C2pa{
         ParentOf,
         ComponentOf,
         InputTo,
-        None
     }
 
     // Manifest
