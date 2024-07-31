@@ -122,13 +122,13 @@ namespace C2pa
     }
 
 
-    public class Manifest
+    public class Manifest (string format = "image/jpeg")
     {
         public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
         
-        public string Format { get; set; } = string.Empty;
+        public string Format { get; set; } = format;
         
-        public string Title { get; set; } = string.Empty;
+        public string? Title { get; set; } = null;
 
         public List<Ingredient> Ingredients { get; set; } = [];
 
@@ -140,18 +140,18 @@ namespace C2pa
         }
     }
 
-    public class ManifestDefinition
+    public class ManifestDefinition (string format = "image/jpeg")
     {
-        public string? Vendor { get; set; } = string.Empty;
+        public string? Vendor { get; set; } = null;
         public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
-        public string? Title { get; set; } = string.Empty;
-        public string Format { get; set; } = string.Empty;
-        public string InsanceID { get; set; } = string.Empty;
+        public string? Title { get; set; } = null;
+        public string Format { get; set; } = format;
+        public string InstanceID { get; set; } = "default_instance_id";
         public ResourceRef? Thumbnail { get; set; } = null;
         public List<Ingredient> Ingredients { get; set; } = [];
         public List<BaseAssertion> Assertions { get; set; } = [];
         public List<string>? Redactions { get; set; } = null;
-        public string? Label { get; set; } = string.Empty;
+        public string? Label { get; set; } = null;
 
         public string GetManifestJson()
         {
