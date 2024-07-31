@@ -7,7 +7,7 @@ namespace C2pa
 {
     public class ManifestBuilder{
 
-        private Manifest _manifest;
+        private ManifestDefinition _definition;
         private readonly ManifestBuilderSettings _settings;
         private readonly ISignerCallback _callback;
         private C2pa.Bindings.ManifestBuilder? _builder;
@@ -16,7 +16,16 @@ namespace C2pa
         public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, Manifest manifest){
             _settings = settings;
             _callback = callback;
-            _manifest = manifest;
+            _definition = JsonSerializer.Deserialize<ManifestDefinition>(manifest.GetManifestJson(), BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
+
+            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
+            _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
+        }
+
+        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition){
+            _settings = settings;
+            _callback = callback;
+            _definition = definition;
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
@@ -25,7 +34,7 @@ namespace C2pa
         public unsafe ManifestBuilder ( ManifestBuilderSettings settings, ISignerCallback callback){
             _settings = settings;
             _callback = callback;
-            _manifest = new Manifest();
+            _definition = new ManifestDefinition();
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
@@ -47,7 +56,7 @@ namespace C2pa
             }
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
-            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _manifest.GetManifestJson());
+            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.GetManifestJson());
             if (_builder == null)
             {
                 Sdk.CheckError();
@@ -64,9 +73,9 @@ namespace C2pa
             return new ManifestBuilderSettings(){ClaimGenerator = claimGenerator, TrustSettings = TrustSettings};
         }
 
-        public Manifest GetManifest()
+        public ManifestDefinition GetManifest()
         {
-            return _manifest;
+            return _definition;
         }
 
         public void FromJsonFile(string path)
@@ -77,46 +86,46 @@ namespace C2pa
         
         public void FromJson(string json)
         {
-            _manifest = JsonSerializer.Deserialize<Manifest>(json, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest is null || Invalid JSON provided.");
+            _definition = JsonSerializer.Deserialize<ManifestDefinition>(json, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
         }
 
-        public void FromManifest(Manifest manifest)
+        public void FromManifest(ManifestDefinition manifest)
         {
-            _manifest = manifest;
+            _definition = manifest;
         }
 
         public void AddClaimGeneratorInfo(ClaimGeneratorInfoData claimGeneratorInfo)
         {
-            _manifest.ClaimGeneratorInfo.Add(claimGeneratorInfo);
+            _definition.ClaimGeneratorInfo.Add(claimGeneratorInfo);
         }
 
         public void AddClaimGeneratorInfo(string name, string version)
         {
-            _manifest.ClaimGeneratorInfo.Add(new ClaimGeneratorInfoData(name, version));
+            _definition.ClaimGeneratorInfo.Add(new ClaimGeneratorInfoData(name, version));
         }
 
         public void SetFormat(string format)
         {
-            _manifest.Format = format;
+            _definition.Format = format;
         }
 
         public void SetFormatFromFilename(string filename){
-            _manifest.Format = filename[(filename.LastIndexOf('.') + 1)..];
+            _definition.Format = filename[(filename.LastIndexOf('.') + 1)..];
         }
 
         public void SetTitle(string title)
         {
-            _manifest.Title = title;
+            _definition.Title = title;
         }
 
         public void AddAssertion(BaseAssertion assertion)
         {
-           _manifest.Assertions.Add(assertion);
+           _definition.Assertions.Add(assertion);
         }
 
         public void AddIngredient(Ingredient ingredient)
         {
-            _manifest.Ingredients.Add(ingredient);
+            _definition.Ingredients.Add(ingredient);
         }
     }
 }

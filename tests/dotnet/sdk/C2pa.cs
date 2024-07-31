@@ -140,6 +140,25 @@ namespace C2pa
         }
     }
 
+    public class ManifestDefinition
+    {
+        public string? Vendor { get; set; } = string.Empty;
+        public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
+        public string? Title { get; set; } = string.Empty;
+        public string Format { get; set; } = string.Empty;
+        public string InsanceID { get; set; } = string.Empty;
+        public ResourceRef? Thumbnail { get; set; } = null;
+        public List<Ingredient> Ingredients { get; set; } = [];
+        public List<BaseAssertion> Assertions { get; set; } = [];
+        public List<string>? Redactions { get; set; } = null;
+        public string? Label { get; set; } = string.Empty;
+
+        public string GetManifestJson()
+        {
+            return JsonSerializer.Serialize(this, BaseAssertion.JsonOptions);
+        }
+    }
+
     public class ManifestStore
     {
         public string ActiveManifest { get; set; } = string.Empty;
