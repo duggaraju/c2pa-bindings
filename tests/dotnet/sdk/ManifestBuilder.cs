@@ -1,5 +1,3 @@
-using System;
-using C2pa;
 using C2pa.Bindings;
 using System.Text.Json;
 
@@ -69,30 +67,19 @@ namespace C2pa
             return _manifest;
         }
 
-        public void FromJsonFile(string path)
-        {
-            string json = System.IO.File.ReadAllText(path);
-            FromJson(json);
-        }
-        
-        public void FromJson(string json)
-        {
-            _manifest = JsonSerializer.Deserialize<Manifest>(json, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest is null || Invalid JSON provided.");
-        }
-
         public void FromManifest(Manifest manifest)
         {
             _manifest = manifest;
         }
 
-        public void AddClaimGeneratorInfo(ClaimGeneratorInfoData claimGeneratorInfo)
+        public void AddClaimGeneratorInfo(ClaimGeneratorInfo claimGeneratorInfo)
         {
             _manifest.ClaimGeneratorInfo.Add(claimGeneratorInfo);
         }
 
         public void AddClaimGeneratorInfo(string name, string version)
         {
-            _manifest.ClaimGeneratorInfo.Add(new ClaimGeneratorInfoData(name, version));
+            _manifest.ClaimGeneratorInfo.Add(new ClaimGeneratorInfo(name, version));
         }
 
         public void SetFormat(string format)

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Dynamic;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Azure.Identity;
 using C2pa;
 

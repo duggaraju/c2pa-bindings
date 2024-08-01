@@ -1,12 +1,5 @@
 using C2pa;
-using Azure.Core;
 using Azure.Identity;
-using Azure.Security.KeyVault.Keys;
-using Azure.Security.KeyVault.Keys.Cryptography;
-using Azure.Security.KeyVault.Secrets;
-using System.Text.Json;
-using System.Security.Cryptography;
-using System.Runtime.ConstrainedExecution;
 
 
 namespace sdktests

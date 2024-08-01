@@ -3,6 +3,7 @@ using Microsoft.Azure.Functions.Worker;
 using Azure.Core;
 using Microsoft.Extensions.Logging;
 using System.Net;
+using C2pa;
 
 namespace ContentCredentialSigner
 {
@@ -57,7 +58,7 @@ namespace ContentCredentialSigner
             var inputFile = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
             using (var stream = File.OpenWrite(inputFile))
                 await req.Body.CopyToAsync(stream);
-            var manifest = Signer.ReadManifestStore(inputFile);
+            var manifest = new ManifestStoreReader().ReadJsonFromFile(inputFile);
             var response = req.CreateResponse();
             if (manifest == null)
             {
@@ -68,7 +69,8 @@ namespace ContentCredentialSigner
             else
             {
                 response.StatusCode = HttpStatusCode.OK;
-                await response.WriteAsJsonAsync(manifest);
+                response.Headers.Add("Content-Type", "application/json");
+                await response.WriteStringAsync(manifest);
             }
             return response;
         }

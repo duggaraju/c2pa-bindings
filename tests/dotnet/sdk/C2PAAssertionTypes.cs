@@ -1,10 +1,10 @@
-using System;
 using System.Dynamic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
-namespace C2pa{
+namespace C2pa
+{
 
     public static partial class Utils{
         public static object GetAssertionTypeFromLabel(string label){

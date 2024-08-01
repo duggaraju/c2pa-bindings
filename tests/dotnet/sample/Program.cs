@@ -1,19 +1,16 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 
 using Azure.Core;
 using Azure.Identity;
-using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
 using Azure.CodeSigning;
 using Azure.CodeSigning.Models;
 
 using C2pa;
-using C2paExceptions;
 
-namespace C2paSample{
+namespace C2paSample
+{
     class Program
     {
         public static void Main(string inputFile, string? outputFile = null)
@@ -58,7 +55,7 @@ namespace C2paSample{
             };
 
             Manifest manifest = new() {
-                ClaimGeneratorInfo = [new ClaimGeneratorInfoData() { Name = "C# Binding test", Version = "1.0.0" }],
+                ClaimGeneratorInfo = [new ClaimGeneratorInfo() { Name = "C# Binding test", Version = "1.0.0" }],
                 Format = "jpg",
                 Title = "C# Test Image",
                 Assertions = [ new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org/", "CreativeWork", [new AuthorInfo("person", "Isaiah Carrington")])) ]

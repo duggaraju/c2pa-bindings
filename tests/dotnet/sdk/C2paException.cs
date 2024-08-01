@@ -1,6 +1,5 @@
-using System;
-
-namespace C2paExceptions {
+namespace C2pa
+{
 
     public static class ExceptionFactory {
         public static Exception GetException(string type, string message) {

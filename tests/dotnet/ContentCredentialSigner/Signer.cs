@@ -23,7 +23,7 @@ namespace ContentCredentialSigner
         static Manifest GetManifest(string format) => new()
         {
             ClaimGeneratorInfo = [
-                new ClaimGeneratorInfoData
+                new ClaimGeneratorInfo
                 {
                     Name = "Azure Function Test",
                     Version = "1.0.0"

@@ -1,8 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using C2pa.Bindings;
-using C2paExceptions;
 
 namespace C2pa
 {
@@ -16,7 +14,8 @@ namespace C2pa
                 return string.Empty;
             }
             var value = Marshal.PtrToStringUTF8(new nint(ptr))!;
-            if (!ownsResource) c2pa.C2paReleaseString(ptr);
+            if (!ownsResource) 
+                c2pa.C2paReleaseString(ptr);
             
             return value;
         }
@@ -50,10 +49,10 @@ namespace C2pa
             return c2pa.C2paCreateStream(this, Read, Seek, Write);
         }
 
-#if LINUX
-        private static int Seek(nint context, long offset, SeekMode mode)
-#else
+#if WINDOWS
         private static int Seek(nint context, int offset, SeekMode mode)
+#else
+        private static int Seek(nint context, long offset, SeekMode mode)
 #endif
         {
             var stream = (Stream)GCHandle.FromIntPtr(context).Target!;
@@ -77,75 +76,6 @@ namespace C2pa
             return stream.Read(span);
         }
     }
-
-    // Example manifest JSON
-    // {
-    //     "claim_generator_info": [
-    //         {
-    //             "name": "{{claimName}}",
-    //             "version": "0.0.1"
-    //         }
-    //     ],
-    //     "format": "{{ext}}",
-    //     "title": "{{manifestTitle}}",
-    //     "ingredients": [],
-    //     "assertions": [
-    //         {   "label": "stds.schema-org.CreativeWork",
-    //             "data": {
-    //                 "@context": "http://schema.org/",
-    //                 "@type": "CreativeWork",
-    //                 "author": [
-    //                     {   "@type": "Person",
-    //                         "name": "{{authorName}}"
-    //                     }
-    //                 ]
-    //             },
-    //             "kind": "Json"
-    //         }
-    //     ]
-    // }
-
-
-    public class Ingredient(string title = "", string format = "", Relationship relationship = Relationship.None) {
-        public string Title { get; set; } = title;
-        public string Format { get; set; } = format;
-        public Relationship Relationship { get; set; } = relationship;
-        public string DocumentID { get; set; } = "";
-        public string InstanceID { get; set; } = "";
-        public HashedUri? HashedManifestUri { get; set; } = null;
-        public List<ValidationStatus>? ValidationStatus { get; set; } = [];
-        public HashedUri? Thumbnail { get; set; } = null;
-        public HashedUri? Data { get; set; } = null;
-        public string Description { get; set; } = "";
-        public string InformationalUri { get; set; } = "";
-    }
-
-
-    public class Manifest
-    {
-        public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
-        
-        public string Format { get; set; } = string.Empty;
-        
-        public string Title { get; set; } = string.Empty;
-
-        public List<Ingredient> Ingredients { get; set; } = [];
-
-        public List<BaseAssertion> Assertions { get; set; } = [];
-
-        public string GetManifestJson()
-        {
-            return JsonSerializer.Serialize(this, BaseAssertion.JsonOptions);
-        }
-    }
-
-    public class ManifestStore
-    {
-        public string ActiveManifest { get; set; } = string.Empty;
-
-        public Dictionary<string, Manifest> Manifests { get; set; } = new Dictionary<string, Manifest>();
-    }
-
 
     public interface ISignerCallback
     {
@@ -187,7 +117,7 @@ namespace C2pa
 
     public class ManifestStoreReader
     {
-        public unsafe ManifestStore? ReadFromFile(string path)
+        public unsafe string? ReadJsonFromFile(string path)
         {
             if (!Utils.FilePathValid(path))
             {
@@ -195,23 +125,28 @@ namespace C2pa
             }
             using var adapter = new StreamAdapter(new FileStream(path, FileMode.Open));
             var c2paStream = adapter.CreateStream();
-            var json = Utils.FromCString(c2pa.C2paVerifyStream(c2paStream));
-            Sdk.CheckError();
+            try
+            {
+                var manifest = c2pa.C2paVerifyStream(c2paStream);
+                Sdk.CheckError();
+                var json = Utils.FromCString(manifest);
+                Console.WriteLine("Manifest: {0}", json);
+                return json;
+            }
+            finally
+            {
+                c2pa.C2paReleaseStream(c2paStream);
+            }
+        }
+
+        public unsafe ManifestStore? ReadFromFile(string path)
+        {
+            var json = ReadJsonFromFile(path);
             if (string.IsNullOrEmpty(json))
             {
                 return null;
             }
-            ManifestStore? manifestStore = null;
-            Console.WriteLine("Manifest: {0}", json);
-            try {
-                manifestStore = JsonSerializer.Deserialize<ManifestStore>(json, BaseAssertion.JsonOptions);
-            } 
-            finally{
-                c2pa.C2paReleaseStream(c2paStream);
-            }
-
-            Sdk.CheckError();
-            return manifestStore;
+            return JsonSerializer.Deserialize<ManifestStore>(json, BaseAssertion.JsonOptions);
         }
     }
 
@@ -223,21 +158,37 @@ namespace C2pa
         /// <summary>
         /// The version of the Sdk.
         /// </summary>
-        public unsafe static string Version => Utils.FromCString(c2pa.C2paVersion());
-
-        public unsafe static string[] SupportedExtensions
+        public static string Version
         {
             get
             {
-                var json =  Utils.FromCString(c2pa.C2paSupportedExtensions());
-                var doc = JsonDocument.Parse(json);
-                var extensions = doc.RootElement.EnumerateArray().Select(e => e.GetString()!).ToArray();
-                return extensions;
+                unsafe
+                {
+                    return Utils.FromCString(c2pa.C2paVersion());
+                }
             }
         }
 
-        public unsafe static void CheckError () {
-            string err = Utils.FromCString(c2pa.C2paError());
+        public static string[] SupportedExtensions
+        {
+            get
+            {
+                unsafe
+                {
+                    var json = Utils.FromCString(c2pa.C2paSupportedExtensions());
+                    var doc = JsonDocument.Parse(json);
+                    var extensions = doc.RootElement.EnumerateArray().Select(e => e.GetString()!).ToArray();
+                    return extensions;
+                }
+            }
+        }
+
+        public static void CheckError () {
+            string err;
+            unsafe
+            {
+                err = Utils.FromCString(c2pa.C2paError());
+            }
             if (string.IsNullOrEmpty(err)) return;
             
             string errType = err.Split(' ')[0];

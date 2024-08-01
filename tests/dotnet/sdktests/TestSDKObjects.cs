@@ -1,7 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
 using C2pa;
-using System.Text.Json;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Keys;
@@ -69,7 +68,7 @@ namespace sdktests
             // Arrange 
             string manifestTitle = "C# Test Image";
             string format = "jpg";
-            ClaimGeneratorInfoData claimInfo = new() { Name = "C# Test", Version = "1.0.0" };
+            ClaimGeneratorInfo claimInfo = new() { Name = "C# Test", Version = "1.0.0" };
             AuthorInfo author = new("Person", "Isaiah Carrington");
             CreativeWorkAssertionData assertionData = new("http://schema.org", "CreativeWork", [author]);
             CreativeWorkAssertion assertion = new(assertionData);
