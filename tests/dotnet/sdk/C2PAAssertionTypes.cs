@@ -47,7 +47,7 @@ namespace C2pa
     {
         public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
-            Converters = { new AssertionTypeConverter() },
+            Converters = { new AssertionTypeConverter(), new JsonStringEnumConverter() },
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };

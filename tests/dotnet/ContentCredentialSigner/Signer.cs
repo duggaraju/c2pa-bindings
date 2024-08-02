@@ -48,7 +48,7 @@ namespace ContentCredentialSigner
             TrustedSigner signer = new(credential);
             SignerConfig config = signer.Config;
             var manifest = GetManifest(format);
-            ManifestBuilder builder = new(Settings, signer, manifest);
+            ManifestBuilder builder = new(Settings, signer, manifest.GetManifestJson());
             builder.Sign(inputFile, outputFile);
         }
 

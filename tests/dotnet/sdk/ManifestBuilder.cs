@@ -5,16 +5,27 @@ namespace C2pa
 {
     public class ManifestBuilder{
 
-        private Manifest _manifest;
+        private ManifestDefinition _definition;
         private readonly ManifestBuilderSettings _settings;
         private readonly ISignerCallback _callback;
         private C2pa.Bindings.ManifestBuilder? _builder;
-        private C2paSigner? _signer;
+        private readonly C2paSigner? _signer;
 
-        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, Manifest manifest){
+        private ResourceStore? _resources;
+
+        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition){
             _settings = settings;
             _callback = callback;
-            _manifest = manifest;
+            _definition = definition;
+
+            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
+            _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
+        }
+
+        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintion){
+            _settings = settings;
+            _callback = callback;
+            _definition = JsonSerializer.Deserialize<ManifestDefinition>(manifestDefintion, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
@@ -23,7 +34,7 @@ namespace C2pa
         public unsafe ManifestBuilder ( ManifestBuilderSettings settings, ISignerCallback callback){
             _settings = settings;
             _callback = callback;
-            _manifest = new Manifest();
+            _definition = new ManifestDefinition();
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
@@ -45,11 +56,19 @@ namespace C2pa
             }
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
-            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _manifest.GetManifestJson());
+            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.GetManifestJson());
             if (_builder == null)
             {
                 Sdk.CheckError();
             }
+
+            if (_resources != null){
+                foreach (var (identifier, path) in _resources.Resources){
+                    using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
+                    c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
+                }
+            }
+
             var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
             c2pa.C2paReleaseManifestBuilder(_builder);
             if (ret != 0)
@@ -62,48 +81,70 @@ namespace C2pa
             return new ManifestBuilderSettings(){ClaimGenerator = claimGenerator, TrustSettings = TrustSettings};
         }
 
-        public Manifest GetManifest()
+        public ManifestDefinition GetManifestDefinition()
         {
-            return _manifest;
+            return _definition;
         }
 
-        public void FromManifest(Manifest manifest)
+        public void FromJsonFile(string path)
         {
-            _manifest = manifest;
+            string json = System.IO.File.ReadAllText(path);
+            FromJson(json);
+        }
+        
+        public void FromJson(string json)
+        {
+            _definition = JsonSerializer.Deserialize<ManifestDefinition>(json, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
+        }
+
+        public void SetManifestDefinition(ManifestDefinition manifest)
+        {
+            _definition = manifest;
         }
 
         public void AddClaimGeneratorInfo(ClaimGeneratorInfo claimGeneratorInfo)
         {
-            _manifest.ClaimGeneratorInfo.Add(claimGeneratorInfo);
+            _definition.ClaimGeneratorInfo.Add(claimGeneratorInfo);
         }
 
         public void AddClaimGeneratorInfo(string name, string version)
         {
-            _manifest.ClaimGeneratorInfo.Add(new ClaimGeneratorInfo(name, version));
+            _definition.ClaimGeneratorInfo.Add(new ClaimGeneratorInfoData(name, version));
         }
 
         public void SetFormat(string format)
         {
-            _manifest.Format = format;
+            _definition.Format = format;
         }
 
         public void SetFormatFromFilename(string filename){
-            _manifest.Format = filename[(filename.LastIndexOf('.') + 1)..];
+            _definition.Format = filename[(filename.LastIndexOf('.') + 1)..];
         }
 
         public void SetTitle(string title)
         {
-            _manifest.Title = title;
+            _definition.Title = title;
         }
 
         public void AddAssertion(BaseAssertion assertion)
         {
-           _manifest.Assertions.Add(assertion);
+           _definition.Assertions.Add(assertion);
         }
 
         public void AddIngredient(Ingredient ingredient)
         {
-            _manifest.Ingredients.Add(ingredient);
+            _definition.Ingredients.Add(ingredient);
         }
+
+        public void AddResource (string identifier, string path){
+            _resources ??= new ResourceStore();
+            _resources.Resources.Add(identifier, path);
+        }
+
+        public static string GenerateInstanceID() {
+            return "xmp:iid:" + Guid.NewGuid().ToString();
+        }
+
     }
+
 }

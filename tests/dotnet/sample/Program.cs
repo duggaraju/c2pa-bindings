@@ -54,8 +54,8 @@ namespace C2paSample
                 """
             };
 
-            Manifest manifest = new() {
-                ClaimGeneratorInfo = [new ClaimGeneratorInfo() { Name = "C# Binding test", Version = "1.0.0" }],
+            ManifestDefinition manifest = new() {
+                ClaimGeneratorInfo = [new ClaimGeneratorInfoData() { Name = "C# Binding test", Version = "1.0.0" }],
                 Format = "jpg",
                 Title = "C# Test Image",
                 Assertions = [ new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org/", "CreativeWork", [new AuthorInfo("person", "Isaiah Carrington")])) ]

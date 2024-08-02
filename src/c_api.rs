@@ -11,7 +11,9 @@
 // specific language governing permissions and limitations under
 // each license.
 
-use std::ffi::{c_char, c_int, c_long, CStr, CString};
+use std::{ffi::{c_char, c_int, c_long, CStr, CString}, io::{self, Read}};
+use std::result::Result::Ok;
+// use uniffi::deps::anyhow::Ok;
 
 use crate::{
     C2paError, C2paSigner, ManifestBuilder, ManifestBuilderSettings, ManifestStoreReader, SeekMode,
@@ -464,6 +466,32 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn c2pa_add_builder_resource(
+    builder_ptr: *mut *mut ManifestBuilder,
+    id: *const c_char,
+    stream: *mut C2paStream,
+) -> c_int{
+    let mut builder = Box::from_raw(*builder_ptr);
+
+    let mut stream_ref = StreamAdapter::from_stream_mut(&mut (*stream));
+
+    let mut buf: Vec<u8> = Vec::new();
+    let res: Result<usize, io::Error> = stream_ref.read_to_end(&mut buf);
+    let _size = res.unwrap();
+    
+    let id = from_c_str(id);
+    let result = builder.add_resource(&id, &buf);
+    
+    match result {
+        Ok(_) => 0,
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
 /// Sign using a ManifestBuilder
 ///
 /// # Arguments
@@ -484,7 +512,7 @@ pub unsafe extern "C" fn c2pa_manifest_builder_sign(
     let result = builder.sign(&(*signer), &mut input_ref, &mut output_ref);
     *builder_ptr = Box::into_raw(builder);
     match result {
-        Ok(_) => 0,
+        std::result::Result::Ok(_) => 0,
         Err(e) => {
             e.set_last();
             -1

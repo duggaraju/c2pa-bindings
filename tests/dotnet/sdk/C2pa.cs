@@ -77,6 +77,95 @@ namespace C2pa
         }
     }
 
+    // Example manifest JSON
+    // {
+    //     "claim_generator_info": [
+    //         {
+    //             "name": "{{claimName}}",
+    //             "version": "0.0.1"
+    //         }
+    //     ],
+    //     "format": "{{ext}}",
+    //     "title": "{{manifestTitle}}",
+    //     "ingredients": [],
+    //     "assertions": [
+    //         {   "label": "stds.schema-org.CreativeWork",
+    //             "data": {
+    //                 "@context": "http://schema.org/",
+    //                 "@type": "CreativeWork",
+    //                 "author": [
+    //                     {   "@type": "Person",
+    //                         "name": "{{authorName}}"
+    //                     }
+    //                 ]
+    //             },
+    //             "kind": "Json"
+    //         }
+    //     ]
+    // }
+
+
+    public class Ingredient(string title = "", string format = "", Relationship relationship = Relationship.parentOf) {
+        public string Title { get; set; } = title;
+        public string Format { get; set; } = format;
+        public Relationship Relationship { get; set; } = relationship;
+        public string? DocumentID { get; set; } = null;
+        public string? InstanceID { get; set; } = null;
+        public HashedUri? C2paManifest { get; set; } = null;
+        public HashedUri? HashedManifestUri { get; set; } = null;
+        public List<ValidationStatus>? ValidationStatus { get; set; } = null;
+        public Thumbnail? Thumbnail { get; set; } = null;
+        public HashedUri? Data { get; set; } = null;
+        public string? Description { get; set; } = null;
+        public string? InformationalUri { get; set; } = null;
+    }
+
+
+    public class Manifest (string format = "application/octet-stream")
+    {
+        public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
+        
+        public string Format { get; set; } = format;
+        
+        public string? Title { get; set; } = null;
+
+        public List<Ingredient> Ingredients { get; set; } = [];
+
+        public List<BaseAssertion> Assertions { get; set; } = [];
+
+        public string GetManifestJson()
+        {
+            return JsonSerializer.Serialize(this, BaseAssertion.JsonOptions);
+        }
+    }
+
+    public class ManifestDefinition (string format = "application/octet-stream")
+    {
+        public string? Vendor { get; set; } = null;
+        public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
+        public string? Title { get; set; } = null;
+        public string Format { get; set; } = format;
+        public string InstanceID { get; set; } = ManifestBuilder.GenerateInstanceID();
+        public Thumbnail? Thumbnail { get; set; } = null;
+        public List<Ingredient> Ingredients { get; set; } = [];
+        public List<BaseAssertion> Assertions { get; set; } = [];
+        public List<string>? Redactions { get; set; } = null;
+        public string? Label { get; set; } = null;
+
+        public string GetManifestJson()
+        {
+            return JsonSerializer.Serialize(this, BaseAssertion.JsonOptions);
+        }
+    }
+
+    public class ManifestStore
+    {
+        public string ActiveManifest { get; set; } = string.Empty;
+
+        public Dictionary<string, Manifest> Manifests { get; set; } = new Dictionary<string, Manifest>();
+    }
+
+
     public interface ISignerCallback
     {
         int Sign(ReadOnlySpan<byte> data, Span<byte> hash);

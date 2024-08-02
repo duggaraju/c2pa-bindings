@@ -60,6 +60,7 @@ namespace sdktests
             Assert.Equal("C# Test Image", manifest.Title);
             Assert.Equal("C# Test", manifest.ClaimGeneratorInfo[0].Name);
             Assert.Equal("Isaiah Carrington", (manifest.Assertions[0].Data as CreativeWorkAssertionData)?.Authors[0].Name);
+            Assert.Equal(Relationship.parentOf, manifest.Ingredients[0].Relationship);
             Assert.Equal("jpg", manifest.Format);
         }
 
@@ -83,7 +84,7 @@ namespace sdktests
 
             ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
 
-            Manifest manifest1 = new Manifest() { ClaimGeneratorInfo = [new("Dotnet Multi Test", "1.0.0-alpha.1")] ,Title = "Manifest 1", Format = "jpg" } ;
+            ManifestDefinition manifest1 = new() { ClaimGeneratorInfo = [new("Dotnet Multi Test", "1.0.0-alpha.1")] ,Title = "Manifest 1", Format = "jpg" } ;
             ManifestBuilder builder1 = new(new() { ClaimGenerator = "Dotnet Multi Test" }, signer, manifest1);
             CustomAssertion assertion1 = new("Custom Operation", new { name = "ByteDefender", source = "MicroHard" });
             builder1.AddAssertion(assertion1);

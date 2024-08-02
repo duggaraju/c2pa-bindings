@@ -75,7 +75,7 @@ namespace sdktests
 
             // Act
 
-            Manifest manifest = new() { Title = manifestTitle, Format = format, ClaimGeneratorInfo = [claimInfo], Assertions = [assertion] };
+            ManifestDefinition manifest = new() { Title = manifestTitle, Format = format, ClaimGeneratorInfo = [claimInfo], Assertions = [assertion] };
 
             // Assert
             Assert.Equal("C# Test Image", manifest.Title);
@@ -112,7 +112,58 @@ namespace sdktests
             Assert.Equal("C# Test Image", manifest.Title);
         }
 
+        [Fact]
+        public void TestIngrdientSerializedFromManifestCorrectly()
+        {
+            // Arrange 
+            string inputfile = "../../../test_samples/ingredient_sample.jpg";
+
+            ManifestStoreReader reader = new();
+
+            // Act
+            ManifestStore? store = reader.ReadFromFile(inputfile);
+            Assert.NotNull(store);
+
+            Manifest? manifest = store.Manifests[store.ActiveManifest];
+
+            // Assert
+            Assert.NotNull(manifest);
+            Assert.Equal("sample.jpg", manifest.Ingredients[0].Title);
+            Assert.Equal("image/jpeg", manifest.Ingredients[0].Thumbnail?.Format);
+        }
+
+        [Fact]
+        public void TestingCreatingASignedFileWithAnIngredient()
+        {
+            // Arrange
+            string inputFile = "../../../test_samples/ingredient_signing_sample.jpg";
+            string title = "pres_edited.jpg";
+            string format = "image/jpeg";
+            string parentName = "ingredient_sample.jpg";
+
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
+
+            ManifestDefinition definition = new()
+            {
+                Title = title,
+                Format = format,
+                ClaimGeneratorInfo = [new ClaimGeneratorInfoData("C# Test", "1.0.0")],
+                Thumbnail = new(format, "manifest_thumbnail.jpg"),
+                Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
+            };
+
+
+            // Act
+            ManifestBuilder builder = new(new() { ClaimGenerator = "C# Test" }, signer, definition);
+            builder.AddIngredient(new(parentName, format, Relationship.parentOf));
+
+            string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI should be null.");
+            builder.AddResource(thumbURI, "../../../test_samples/ingredient_sample.jpg");
+
+            // Assert
+        }
     }
+
 
     public class TestUtils
     {
@@ -120,12 +171,13 @@ namespace sdktests
         {
             ManifestBuilderSettings builderSettings = new() { ClaimGenerator = "C# Binding Test" };
 
-            Manifest manifest = new()
+            ManifestDefinition manifest = new()
             {
                 Title = "C# Test Image",
                 Format = "jpg",
                 ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
-                Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))]
+                Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
+                Ingredients = [new Ingredient("sample.jpg", "image/jpeg", Relationship.parentOf)]
             };
 
             ManifestBuilder builder = new(builderSettings, signer, manifest);
