@@ -151,8 +151,8 @@ namespace sdktests
         {
             // Arrange
             TestUtils.KeyVaultSigner signer = new(new DefaultAzureCredential(true));
-            string inputPath = "..\\..\\..\\test_samples\\assertion_sample.jpg";
-            string outputPath = "..\\..\\..\\test_samples\\assertion_sample_signed.jpg";
+            string inputPath = "test_samples/assertion_sample.jpg";
+            string outputPath = "test_samples/assertion_sample_signed.jpg";
 
             if (File.Exists(outputPath))
             {

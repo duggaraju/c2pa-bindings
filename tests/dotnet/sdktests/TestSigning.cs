@@ -28,8 +28,8 @@ namespace sdktests
         public void TestManifestAddedToFileCorrectly(string signerType)
         {
             // Arrange
-            string inputPath = "..\\..\\..\\test_samples\\signing_sample.jpg";
-            string outputPath = $"..\\..\\..\\test_samples\\output_{signerType}_signed.jpg";
+            string inputPath = "test_samples/signing_sample.jpg";
+            string outputPath = $"test_samples/output_{signerType}_signed.jpg";
 
             if (File.Exists(outputPath))
             {
@@ -68,9 +68,9 @@ namespace sdktests
         public void TestMultipleManifestsAddedToFileAndDeserializedCorrectly()
         {
             // Arrange
-            string inputPath = "..\\..\\..\\test_samples\\multi_sample.jpg";
-            string outputPath1 = "..\\..\\..\\test_samples\\multi_signed.jpg";
-            string outputPath2 = "..\\..\\..\\test_samples\\multi_signed2.jpg";
+            string inputPath = "test_samples/multi_sample.jpg";
+            string outputPath1 = "test_samples/multi_signed.jpg";
+            string outputPath2 = "test_samples/multi_signed2.jpg";
 
             if (File.Exists(outputPath1))
             {

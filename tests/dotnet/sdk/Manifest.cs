@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace C2pa
 {
@@ -29,6 +30,30 @@ namespace C2pa
     //         }
     //     ]
     // }
+
+    public class Thumbnail(string format = "", string identifier = "") : ResourceRef(format, identifier);
+
+    public class ResourceRef(string format = "", string identifier = "")
+    {
+        public string Format { get; set; } = format;
+        public string Identifier { get; set; } = identifier;
+        public List<AssetType>? DataTypes { get; set; } = [];
+        public string? Alg { get; set; } = null;
+        public string? Hash { get; set; } = null;
+    }
+
+    public class AssetType(string assetType = "", string? version = null)
+    {
+        [JsonPropertyName("asset_type")]
+        public string Type { get; set; } = assetType;
+        public string? Version { get; set; } = version;
+    }
+
+    public class ResourceStore
+    {
+        public Dictionary<string, string> Resources { get; set; } = [];
+        public string? Label { get; set; } = null;
+    }
 
     // Ingredient
     public class HashedUri(string url, string alg, byte[] hash, byte[] salt)

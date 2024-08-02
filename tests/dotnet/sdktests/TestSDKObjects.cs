@@ -51,7 +51,7 @@ namespace sdktests
         }
 
         [Theory]
-        [InlineData("../../../TestSigning.cs", true)]
+        [InlineData("test_samples/space_sample.jpg", true)]
         [InlineData("./some/invalid/path.pth", false)]
         public void TestUtilsFilePathValidMethod(string path, bool expected)
         {
@@ -90,7 +90,7 @@ namespace sdktests
             // Arrange
             ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
 
-            string outputPath = TestUtils.CreateSignedFile("../../../test_samples/space_sample.jpg", "../../../test_samples/space_sample_signed.jpg", signer);
+            string outputPath = TestUtils.CreateSignedFile("test_samples/space_sample.jpg", "test_samples/space_sample_signed.jpg", signer);
 
             // Act
 
@@ -116,7 +116,7 @@ namespace sdktests
         public void TestIngrdientSerializedFromManifestCorrectly()
         {
             // Arrange 
-            string inputfile = "../../../test_samples/ingredient_sample.jpg";
+            string inputfile = "test_samples/ingredient_sample.jpg";
 
             ManifestStoreReader reader = new();
 
@@ -136,7 +136,7 @@ namespace sdktests
         public void TestingCreatingASignedFileWithAnIngredient()
         {
             // Arrange
-            string inputFile = "../../../test_samples/ingredient_signing_sample.jpg";
+            string inputFile = "test_samples/ingredient_signing_sample.jpg";
             string title = "pres_edited.jpg";
             string format = "image/jpeg";
             string parentName = "ingredient_sample.jpg";
@@ -147,7 +147,7 @@ namespace sdktests
             {
                 Title = title,
                 Format = format,
-                ClaimGeneratorInfo = [new ClaimGeneratorInfoData("C# Test", "1.0.0")],
+                ClaimGeneratorInfo = { new ClaimGeneratorInfo("C# Test", "1.0.0") },
                 Thumbnail = new(format, "manifest_thumbnail.jpg"),
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
             };

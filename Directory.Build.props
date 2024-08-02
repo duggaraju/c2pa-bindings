@@ -1,0 +1,16 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Global locations">
+    <!--
+      $(MSBuildAllProjects) is a list of files that determine if a project is up-to-date or not.  By including this
+      file in the list, it ensures that all projects will be rebuilt if it changes.
+    -->
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <RootDirectory>$(MSBuildThisFileDirectory)</RootDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <TargetFramework>net8.0-windows</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+</Project>

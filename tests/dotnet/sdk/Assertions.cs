@@ -1,26 +1,9 @@
 using System.Dynamic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 
 namespace C2pa
 {
-
-    public static partial class Utils{
-        public static object GetAssertionTypeFromLabel(string label){
-            return label switch
-            {
-                "base" => typeof(BaseAssertion),
-                "c2pa.action" => typeof(ActionAssertion),
-                "c2pa.thumbnail" => typeof(ThumbnailAssertion),
-                string s when Regex.IsMatch(s, @"c2pa\.thumbnail\.claim.*") => typeof(ClaimThumbnailAssertion),
-                string s when Regex.IsMatch(s, @"c2pa\.thumbnail\.ingredient.*") => typeof(IngredientThumbnailAssertion),
-                "stds.schema-org.CreativeWork" => typeof(CreativeWorkAssertion),
-                _ => typeof(CustomAssertion),
-            };
-        }
-    }
-
     public class AssertionTypeConverter : JsonConverter<BaseAssertion>
     {
         public override BaseAssertion? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

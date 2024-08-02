@@ -2,13 +2,16 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CppSharp" Version="1.1.5.3168" />
   </ItemGroup>
+  <Target Name="cargo" BeforeTargets="Build">
+    <Exec Command="cargo build --release --features=uniffi/cli" WorkingDirectory="$(RootDirectory)" IgnoreExitCode="true" />
+    <Exec Command="cbindgen --config cbindgen.toml --crate c2pa-bindings --output target/c2pa.h --lang c" WorkingDirectory="$(RootDirectory)" IgnoreExitCode="" />
+  </Target>
 </Project>
