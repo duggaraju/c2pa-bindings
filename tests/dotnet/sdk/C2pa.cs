@@ -49,10 +49,10 @@ namespace C2pa
             return c2pa.C2paCreateStream(this, Read, Seek, Write);
         }
 
-#if WINDOWS
-        private static int Seek(nint context, int offset, SeekMode mode)
-#else
+#if LINUX
         private static int Seek(nint context, long offset, SeekMode mode)
+#else
+        private static int Seek(nint context, int offset, SeekMode mode)
 #endif
         {
             var stream = (Stream)GCHandle.FromIntPtr(context).Target!;
@@ -104,45 +104,10 @@ namespace C2pa
     //     ]
     // }
 
-
-    public class Ingredient(string title = "", string format = "", Relationship relationship = Relationship.parentOf) {
-        public string Title { get; set; } = title;
-        public string Format { get; set; } = format;
-        public Relationship Relationship { get; set; } = relationship;
-        public string? DocumentID { get; set; } = null;
-        public string? InstanceID { get; set; } = null;
-        public HashedUri? C2paManifest { get; set; } = null;
-        public HashedUri? HashedManifestUri { get; set; } = null;
-        public List<ValidationStatus>? ValidationStatus { get; set; } = null;
-        public Thumbnail? Thumbnail { get; set; } = null;
-        public HashedUri? Data { get; set; } = null;
-        public string? Description { get; set; } = null;
-        public string? InformationalUri { get; set; } = null;
-    }
-
-
-    public class Manifest (string format = "application/octet-stream")
-    {
-        public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
-        
-        public string Format { get; set; } = format;
-        
-        public string? Title { get; set; } = null;
-
-        public List<Ingredient> Ingredients { get; set; } = [];
-
-        public List<BaseAssertion> Assertions { get; set; } = [];
-
-        public string GetManifestJson()
-        {
-            return JsonSerializer.Serialize(this, BaseAssertion.JsonOptions);
-        }
-    }
-
     public class ManifestDefinition (string format = "application/octet-stream")
     {
         public string? Vendor { get; set; } = null;
-        public List<ClaimGeneratorInfoData> ClaimGeneratorInfo { get; set; } = [];
+        public List<ClaimGeneratorInfo> ClaimGeneratorInfo { get; set; } = [];
         public string? Title { get; set; } = null;
         public string Format { get; set; } = format;
         public string InstanceID { get; set; } = ManifestBuilder.GenerateInstanceID();
@@ -157,14 +122,6 @@ namespace C2pa
             return JsonSerializer.Serialize(this, BaseAssertion.JsonOptions);
         }
     }
-
-    public class ManifestStore
-    {
-        public string ActiveManifest { get; set; } = string.Empty;
-
-        public Dictionary<string, Manifest> Manifests { get; set; } = new Dictionary<string, Manifest>();
-    }
-
 
     public interface ISignerCallback
     {

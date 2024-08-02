@@ -39,44 +39,42 @@ namespace C2pa
         public byte[] Salt { get; set; } = salt;
     }
 
-    public record ValidationStatus(string code, string url = "", string explanation = "");
+    public record ValidationStatus(string Code = "", string Url = "", string Explanation = "");
 
-    public enum Relationship
-    {
-        ParentOf,
-        ComponentOf,
-        InputTo,
-        None
+    public enum Relationship {
+        parentOf,
+        componentOf,
+        inputTo,
     }
 
     // Manifest
     public record ClaimGeneratorInfo(string Name = "", string Version = "");
 
-    public class Ingredient(string title = "", string format = "", Relationship relationship = Relationship.None)
-    {
+    public class Ingredient(string title = "", string format = "", Relationship relationship = Relationship.parentOf) {
         public string Title { get; set; } = title;
         public string Format { get; set; } = format;
         public Relationship Relationship { get; set; } = relationship;
-        public string DocumentID { get; set; } = "";
-        public string InstanceID { get; set; } = "";
+        public string? DocumentID { get; set; } = null;
+        public string? InstanceID { get; set; } = null;
+        public HashedUri? C2paManifest { get; set; } = null;
         public HashedUri? HashedManifestUri { get; set; } = null;
-        public List<ValidationStatus>? ValidationStatus { get; set; } = [];
-        public HashedUri? Thumbnail { get; set; } = null;
+        public List<ValidationStatus>? ValidationStatus { get; set; } = null;
+        public Thumbnail? Thumbnail { get; set; } = null;
         public HashedUri? Data { get; set; } = null;
-        public string Description { get; set; } = "";
-        public string InformationalUri { get; set; } = "";
+        public string? Description { get; set; } = null;
+        public string? InformationalUri { get; set; } = null;
     }
 
 
-    public class Manifest
+    public class Manifest (string format = "application/octet-stream")
     {
         public string ClaimGenerator { get; set; } = string.Empty;
 
         public List<ClaimGeneratorInfo> ClaimGeneratorInfo { get; set; } = [];
-
-        public string Format { get; set; } = string.Empty;
-
-        public string Title { get; set; } = string.Empty;
+        
+        public string Format { get; set; } = format;
+        
+        public string? Title { get; set; } = null;
 
         public List<Ingredient> Ingredients { get; set; } = [];
 

@@ -8,23 +8,8 @@ using C2pa.Bindings;
 namespace C2pa{
 
     // Ingredient
-    public class HashedUri (string url, string alg, byte[] hash, byte[] salt){
-        public string Url { get; set; } = url;
-        public string Alg { get; set; } = alg;
-        public byte[] Hash { get; set; } = hash;
-        public byte[] Salt { get; set; } = salt;
-    }
-
-    public record ValidationStatus(string Code = "", string Url = "", string Explanation = "");
-
-    public enum Relationship {
-        parentOf,
-        componentOf,
-        inputTo,
-    }
 
     // Manifest
-    public record ClaimGeneratorInfoData(string Name = "", string Version = "");
 
     // General
     public class Thumbnail (string format = "", string identifier = "") : ResourceRef (format, identifier);
