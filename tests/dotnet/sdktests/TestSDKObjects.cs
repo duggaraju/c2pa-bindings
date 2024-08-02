@@ -133,7 +133,38 @@ namespace sdktests
             Assert.Equal("image/jpeg", manifest.Ingredients[0].Thumbnail?.Format);
         }
 
+        [Fact]
+        public void TestingCreatingASignedFileWithAnIngredient()
+        {
+            // Arrange
+            string inputFile = "../../../test_samples/ingredient_signing_sample.jpg";
+            string title = "pres_edited.jpg";
+            string format = "image/jpeg";
+            string parentName = "ingredient_sample.jpg";
+
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
+
+            ManifestDefinition definition = new()
+            {
+                Title = title,
+                Format = format,
+                ClaimGeneratorInfo = [new ClaimGeneratorInfoData("C# Test", "1.0.0")],
+                Thumbnail = new(format, "manifest_thumbnail.jpg"),
+                Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
+            };
+
+
+            // Act
+            ManifestBuilder builder = new(new() { ClaimGenerator = "C# Test" }, signer, definition);
+            builder.AddIngredient(new(parentName, format, Relationship.parentOf));
+
+            string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI should be null.");
+            builder.AddResource(thumbURI, "../../../test_samples/ingredient_sample.jpg");
+
+            // Assert
+        }
     }
+
 
     public class TestUtils
     {

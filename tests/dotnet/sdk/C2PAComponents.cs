@@ -15,11 +15,6 @@ namespace C2pa{
         public byte[] Salt { get; set; } = salt;
     }
 
-    public class Thumbnail (string format = "", string identifier = ""){
-        public string Format { get; set; } = format;
-        public string Identifier { get; set; } = identifier;
-    }
-
     public record ValidationStatus(string Code = "", string Url = "", string Explanation = "");
 
     public enum Relationship {
@@ -31,7 +26,8 @@ namespace C2pa{
     // Manifest
     public record ClaimGeneratorInfoData(string Name = "", string Version = "");
 
-    // Other
+    // General
+    public class Thumbnail (string format = "", string identifier = "") : ResourceRef (format, identifier);
 
     public class ResourceRef (string format = "", string identifier = ""){
         public string Format { get; set; } = format;
@@ -39,12 +35,16 @@ namespace C2pa{
         public List<AssetType>? DataTypes { get; set; } = [];
         public string? Alg { get; set; } = null;
         public string? Hash { get; set; } = null;
-
     }
 
     public class AssetType (string assetType = "", string? version = null){
         [JsonPropertyName("asset_type")]
         public string Type { get; set; } = assetType;
         public string? Version { get; set; } = version;
+    }
+
+    public class ResourceStore {
+        public Dictionary<string, string> Resources { get; set; } = [];
+        public string? Label { get; set; } = null;
     }
 }

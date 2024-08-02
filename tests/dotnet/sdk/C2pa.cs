@@ -147,7 +147,7 @@ namespace C2pa
         public string? Title { get; set; } = null;
         public string Format { get; set; } = format;
         public string InstanceID { get; set; } = ManifestBuilder.GenerateInstanceID();
-        public ResourceRef? Thumbnail { get; set; } = null;
+        public Thumbnail? Thumbnail { get; set; } = null;
         public List<Ingredient> Ingredients { get; set; } = [];
         public List<BaseAssertion> Assertions { get; set; } = [];
         public List<string>? Redactions { get; set; } = null;

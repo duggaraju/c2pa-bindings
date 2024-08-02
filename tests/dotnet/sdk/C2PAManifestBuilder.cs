@@ -11,7 +11,9 @@ namespace C2pa
         private readonly ManifestBuilderSettings _settings;
         private readonly ISignerCallback _callback;
         private C2pa.Bindings.ManifestBuilder? _builder;
-        private C2paSigner? _signer;
+        private readonly C2paSigner? _signer;
+
+        private ResourceStore? _resources;
 
         public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition){
             _settings = settings;
@@ -61,6 +63,14 @@ namespace C2pa
             {
                 Sdk.CheckError();
             }
+
+            if (_resources != null){
+                foreach (var (identifier, path) in _resources.Resources){
+                    using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
+                    c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
+                }
+            }
+
             var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
             c2pa.C2paReleaseManifestBuilder(_builder);
             if (ret != 0)
@@ -127,9 +137,16 @@ namespace C2pa
         {
             _definition.Ingredients.Add(ingredient);
         }
+
+        public void AddResource (string identifier, string path){
+            _resources ??= new ResourceStore();
+            _resources.Resources.Add(identifier, path);
+        }
+
         public static string GenerateInstanceID() {
             return "xmp:iid:" + Guid.NewGuid().ToString();
         }
+
     }
 
 }
