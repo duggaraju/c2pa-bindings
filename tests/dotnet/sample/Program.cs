@@ -55,13 +55,11 @@ namespace C2paSample
             };
 
             ManifestDefinition manifest = new() {
-                ClaimGeneratorInfo = [new ClaimGeneratorInfoData() { Name = "C# Binding test", Version = "1.0.0" }],
+                ClaimGeneratorInfo = [new ClaimGeneratorInfo() { Name = "C# Binding test", Version = "1.0.0" }],
                 Format = "jpg",
                 Title = "C# Test Image",
                 Assertions = [ new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org/", "CreativeWork", [new AuthorInfo("person", "Isaiah Carrington")])) ]
             };
-
-            SignerConfig config = signer.Config;
 
             ManifestBuilder builder = new(settings, signer, manifest);
             builder.Sign(inputFile, outputFile);

@@ -109,7 +109,7 @@ namespace C2pa
 
         public void AddClaimGeneratorInfo(string name, string version)
         {
-            _definition.ClaimGeneratorInfo.Add(new ClaimGeneratorInfoData(name, version));
+            _definition.ClaimGeneratorInfo.Add(new ClaimGeneratorInfo(name, version));
         }
 
         public void SetFormat(string format)

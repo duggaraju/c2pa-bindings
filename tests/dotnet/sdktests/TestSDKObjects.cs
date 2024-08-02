@@ -147,7 +147,7 @@ namespace sdktests
             {
                 Title = title,
                 Format = format,
-                ClaimGeneratorInfo = [new ClaimGeneratorInfoData("C# Test", "1.0.0")],
+                ClaimGeneratorInfo = [new ClaimGeneratorInfo("C# Test", "1.0.0")],
                 Thumbnail = new(format, "manifest_thumbnail.jpg"),
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
             };
