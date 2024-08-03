@@ -8,7 +8,7 @@ namespace C2pa
         private ManifestDefinition _definition;
         private readonly ManifestBuilderSettings _settings;
         private readonly ISignerCallback _callback;
-        private C2pa.Bindings.ManifestBuilder? _builder;
+        private readonly C2pa.Bindings.ManifestBuilder? _builder;
         private readonly C2paSigner? _signer;
 
         private ResourceStore? _resources;
@@ -17,6 +17,7 @@ namespace C2pa
             _settings = settings;
             _callback = callback;
             _definition = definition;
+            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.GetManifestJson());
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
@@ -26,6 +27,7 @@ namespace C2pa
             _settings = settings;
             _callback = callback;
             _definition = JsonSerializer.Deserialize<ManifestDefinition>(manifestDefintion, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
+            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.GetManifestJson());
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
@@ -56,18 +58,6 @@ namespace C2pa
             }
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
-            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.GetManifestJson());
-            if (_builder == null)
-            {
-                Sdk.CheckError();
-            }
-
-            if (_resources != null){
-                foreach (var (identifier, path) in _resources.Resources){
-                    using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
-                    c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
-                }
-            }
 
             var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
             c2pa.C2paReleaseManifestBuilder(_builder);
@@ -139,6 +129,8 @@ namespace C2pa
         public void AddResource (string identifier, string path){
             _resources ??= new ResourceStore();
             _resources.Resources.Add(identifier, path);
+            using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
+            c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
         }
 
         public static string GenerateInstanceID() {
