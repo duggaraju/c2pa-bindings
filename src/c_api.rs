@@ -11,14 +11,14 @@
 // specific language governing permissions and limitations under
 // each license.
 
-use std::{ffi::{c_char, c_int, c_long, CStr, CString}, io::{}};
+use std::ffi::{c_char, c_int, c_long, CStr, CString};
 use std::result::Result::Ok;
 use c2pa::settings::load_settings_from_str;
 use serde_json::json;
 // use uniffi::deps::anyhow::Ok;
 
 use crate::{
-    C2paError, C2paSigner, ManifestBuilder, ManifestBuilderSettings, ManifestStoreReader, SeekMode,
+    C2paError, C2paSigner, ManifestBuilder, ManifestStoreReader, SeekMode,
     SignerConfig, StreamAdapter, StreamError, StreamResult,
 };
 

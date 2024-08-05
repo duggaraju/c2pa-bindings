@@ -3,8 +3,7 @@ use std::io::Cursor;
 use c2pa::{Builder, CAIRead, Signer, CAIReadWrite,};
 
 use crate::{
-    stream::{Stream, StreamAdapter},
-    Result, C2paSigner, C2paError
+    Result, C2paError, C2paSigner, StreamAdapter, Stream
 };
 
 
@@ -14,7 +13,7 @@ pub struct ManifestBuilderSettings {
 }
 
 pub struct ManifestBuilder {
-    builder: Builder,
+    pub builder: Builder,
 }
 
 impl ManifestBuilder {
@@ -34,6 +33,17 @@ impl ManifestBuilder {
 
         self.builder.add_resource(&resource_id, &mut stream);
         Ok(self)
+    }
+
+    pub fn from_json(&mut self, json: &str) -> Result<()> {
+        self.builder = c2pa::Builder::from_json(json).map_err(C2paError::from)?;
+        Ok(())
+    }
+
+    pub fn sign_stream(&mut self, signer: &C2paSigner, input_mut: &dyn Stream, output_mut: &dyn Stream, ) -> Result<Vec<u8>> {
+        let mut input = StreamAdapter::from(input_mut);
+        let mut output = StreamAdapter::from(output_mut);
+        self.sign(signer, &mut input, &mut output)
     }
 
     pub fn sign(&mut self, signer: &dyn Signer, input: &mut dyn CAIRead, output: &mut dyn CAIReadWrite) -> Result<Vec<u8>> {
