@@ -3,7 +3,8 @@ using System.Text.Json;
 
 namespace C2pa
 {
-    public class ManifestBuilder{
+    public class ManifestBuilder
+    {
 
         private ManifestDefinition _definition;
         private readonly ManifestBuilderSettings _settings;
@@ -13,7 +14,8 @@ namespace C2pa
 
         private ResourceStore? _resources;
 
-        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition){
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition)
+        {
             _settings = settings;
             _callback = callback;
             _definition = definition;
@@ -22,7 +24,8 @@ namespace C2pa
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
         }
 
-        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintion){
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintion)
+        {
             _settings = settings;
             _callback = callback;
             _definition = JsonSerializer.Deserialize<ManifestDefinition>(manifestDefintion, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
@@ -31,7 +34,8 @@ namespace C2pa
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
         }
 
-        public unsafe ManifestBuilder ( ManifestBuilderSettings settings, ISignerCallback callback){
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback)
+        {
             _settings = settings;
             _callback = callback;
             _definition = new ManifestDefinition();
@@ -62,8 +66,10 @@ namespace C2pa
                 Sdk.CheckError();
             }
 
-            if (_resources != null){
-                foreach (var (identifier, path) in _resources.Resources){
+            if (_resources != null)
+            {
+                foreach (var (identifier, path) in _resources.Resources)
+                {
                     using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
                     c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
                 }
@@ -77,8 +83,9 @@ namespace C2pa
             }
         }
 
-        public static ManifestBuilderSettings CreateBuilderSettings(string claimGenerator, string TrustSettings = "{}"){
-            return new ManifestBuilderSettings(){ClaimGenerator = claimGenerator, TrustSettings = TrustSettings};
+        public static ManifestBuilderSettings CreateBuilderSettings(string claimGenerator, string TrustSettings = "{}")
+        {
+            return new ManifestBuilderSettings() { ClaimGenerator = claimGenerator, TrustSettings = TrustSettings };
         }
 
         public ManifestDefinition GetManifestDefinition()
@@ -91,7 +98,7 @@ namespace C2pa
             string json = System.IO.File.ReadAllText(path);
             FromJson(json);
         }
-        
+
         public void FromJson(string json)
         {
             _definition = JsonSerializer.Deserialize<ManifestDefinition>(json, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
@@ -117,7 +124,8 @@ namespace C2pa
             _definition.Format = format;
         }
 
-        public void SetFormatFromFilename(string filename){
+        public void SetFormatFromFilename(string filename)
+        {
             _definition.Format = filename[(filename.LastIndexOf('.') + 1)..];
         }
 
@@ -128,7 +136,7 @@ namespace C2pa
 
         public void AddAssertion(BaseAssertion assertion)
         {
-           _definition.Assertions.Add(assertion);
+            _definition.Assertions.Add(assertion);
         }
 
         public void AddIngredient(Ingredient ingredient)
@@ -136,12 +144,14 @@ namespace C2pa
             _definition.Ingredients.Add(ingredient);
         }
 
-        public void AddResource (string identifier, string path){
+        public void AddResource(string identifier, string path)
+        {
             _resources ??= new ResourceStore();
             _resources.Resources.Add(identifier, path);
         }
 
-        public static string GenerateInstanceID() {
+        public static string GenerateInstanceID()
+        {
             return "xmp:iid:" + Guid.NewGuid().ToString();
         }
 

@@ -31,15 +31,15 @@ namespace C2paSample
 
         private static void ValidateFile(string inputFile)
         {
-           return;
+            return;
         }
 
         private static void SignFile(string inputFile, string outputFile)
         {
             TokenCredential credential = new DefaultAzureCredential(true);
-            TrustedSigner signer = new (credential);
-            
-            ManifestBuilderSettings settings = new() 
+            TrustedSigner signer = new(credential);
+
+            ManifestBuilderSettings settings = new()
             {
                 ClaimGenerator = "C# Binding test",
                 TrustSettings = """
@@ -54,11 +54,12 @@ namespace C2paSample
                 """
             };
 
-            ManifestDefinition manifest = new() {
-                ClaimGeneratorInfo = [new ClaimGeneratorInfo() { Name = "C# Binding test", Version = "1.0.0" }],
+            ManifestDefinition manifest = new()
+            {
+                ClaimGeneratorInfo = { new ClaimGeneratorInfo { Name = "C# Binding test", Version = "1.0.0" } },
                 Format = "jpg",
                 Title = "C# Test Image",
-                Assertions = [ new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org/", "CreativeWork", [new AuthorInfo("person", "Isaiah Carrington")])) ]
+                Assertions = { new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org/", "CreativeWork", [new AuthorInfo("person", "Isaiah Carrington")])) }
             };
 
             ManifestBuilder builder = new(settings, signer, manifest);
@@ -93,20 +94,21 @@ namespace C2paSample
                 return digest;
             }
 
-            public string GetCertificates() {
+            public string GetCertificates()
+            {
                 Random random = new();
                 byte[] hash = new byte[32];
                 random.NextBytes(hash);
                 byte[] digest = GetDigest(hash);
-                
-                SignRequest request = new (Algorithm, digest);
+
+                SignRequest request = new(Algorithm, digest);
                 CertificateProfileSignOperation operation = _client.StartSign(AccountName, CertificateProfile, request);
                 SignStatus status = operation.WaitForCompletion();
 
                 SignedCms cmsData = new();
                 char[] cdata = Encoding.ASCII.GetChars(status.SigningCertificate);
                 byte[] certificate = Convert.FromBase64CharArray(cdata, 0, cdata.Length);
-                
+
                 cmsData.Decode(certificate);
 
                 StringBuilder builder = new();
