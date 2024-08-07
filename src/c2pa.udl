@@ -86,3 +86,21 @@ interface C2paSigner {
   [Throws=C2paError]
   void configure([ByRef] SignerConfig config);
 };
+
+interface ResourceStore {
+  dictionary resources;
+
+  string? base_path = null;
+
+  string? label = null;
+};
+
+interface Builder {
+  string definition;
+
+  string remote_url;
+
+  boolean no_embed = true;
+
+  ResourceStore resources;
+};
