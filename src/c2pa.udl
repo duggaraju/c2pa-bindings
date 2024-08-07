@@ -65,19 +65,6 @@ interface ManifestStoreReader {
   void resource_write_stream([ByRef] string manifest, [ByRef] string id, [ByRef] Stream stream);
 };
 
-dictionary ManifestBuilderSettings {
-  string generator;
-  string settings;
-};
-
-interface ManifestBuilder {
-  [Throws=C2paError]
-  void from_json([ByRef] string json);
-
-  [Throws=C2paError]
-  bytes sign_stream([ByRef] C2paSigner signer, [ByRef] Stream input, [ByRef] Stream output);
-};
-
 dictionary SignerConfig {
   string alg;
 

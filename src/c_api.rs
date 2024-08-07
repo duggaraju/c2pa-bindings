@@ -14,12 +14,13 @@
 use std::ffi::{c_char, c_int, c_long, CStr, CString};
 use std::result::Result::Ok;
 use c2pa::settings::load_settings_from_str;
+use c2pa::Builder;
 use serde_json::json;
 
 // use uniffi::deps::anyhow::Ok;
 
 use crate::{
-    C2paError, C2paSigner, ManifestBuilder, ManifestStoreReader, SeekMode,
+    C2paError, C2paSigner, ManifestStoreReader, SeekMode,
     SignerConfig, StreamAdapter, StreamError, StreamResult,
 };
 
@@ -452,7 +453,7 @@ pub unsafe extern "C" fn c2pa_manifest_reader_resource(
 pub unsafe extern "C" fn c2pa_create_manifest_builder(
     settings: &ManifestBuilderSettingsC,
     json: *const c_char,
-) -> *mut ManifestBuilder {
+) -> *mut Builder {
     let definition = from_c_str(json);
 
     let settings = json!({
@@ -460,47 +461,45 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
         "settings": from_c_str(settings.settings),
     }).to_string();
 
-    load_settings_from_str(&settings, "json").map_err(C2paError::from);
+    let result = load_settings_from_str(&settings, "json").map_err(C2paError::from);
+
+    if let Err(e) = result {
+        e.set_last();
+        return std::ptr::null_mut();
+    }
     
-    let builder = c2pa::Builder::from_json(&definition).map_err(C2paError::from).unwrap();
-    let manifest_builder = ManifestBuilder { builder };
+    let builder = Builder::from_json(&definition).map_err(C2paError::from);
 
-    Box::into_raw(Box::new(manifest_builder))
-
-    // match builder.from_json(&json) {
-    //     Ok(_) => Box::into_raw(Box::new(builder)),
-    //     Err(e) => {
-    //         e.set_last();
-    //         std::ptr::null_mut()
-    //     }
-    // }
+    match builder{
+        Ok(builder) => Box::into_raw(Box::new(builder)),
+        Err(e) => {
+            e.set_last();
+            std::ptr::null_mut()
+        }
+    }
 }
 
-// #[no_mangle]
-// pub unsafe extern "C" fn c2pa_add_builder_resource(
-//     builder_ptr: *mut *mut ManifestBuilder,
-//     id: *const c_char,
-//     stream: *mut C2paStream,
-// ) -> c_int{
-//     let mut builder = Box::from_raw(*builder_ptr);
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_add_builder_resource(
+    builder_ptr: *mut *mut Builder,
+    id: *const c_char,
+    stream: *mut C2paStream,
+) -> c_int{
+    let mut builder = Box::from_raw(*builder_ptr);
 
-//     let mut stream_ref = StreamAdapter::from_stream_mut(&mut (*stream));
-
-//     let mut buf: Vec<u8> = Vec::new();
-//     let res: Result<usize, io::Error> = stream_ref.read_to_end(&mut buf);
-//     let _size = res.unwrap();
+    let mut source = StreamAdapter::from_stream_mut(&mut (*stream));
     
-//     let id = from_c_str(id);
-//     let result = builder.add_resource(&id, &buf);
+    let id = from_c_str(id);
+    let result = builder.add_resource(&id, &mut source).map_err(C2paError::from);
     
-//     match result {
-//         Ok(_) => 0,
-//         Err(e) => {
-//             e.set_last();
-//             -1
-//         }
-//     }
-// }
+    match result {
+        Ok(_) => 0,
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
 
 #[no_mangle]
 /// Sign using a ManifestBuilder
@@ -512,7 +511,8 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
 /// * `output` - optional pointer to a C2paStream
 ///
 pub unsafe extern "C" fn c2pa_manifest_builder_sign(
-    builder_ptr: *mut *mut ManifestBuilder,
+    builder_ptr: *mut *mut Builder,
+    format: *const c_char,
     signer: *const C2paSigner,
     input: *mut C2paStream,
     output: *mut C2paStream,
@@ -520,7 +520,8 @@ pub unsafe extern "C" fn c2pa_manifest_builder_sign(
     let mut builder = Box::from_raw(*builder_ptr);
     let mut input_ref = StreamAdapter::from_stream_mut(&mut (*input));
     let mut output_ref = StreamAdapter::from_stream_mut(&mut (*output));
-    let result = builder.sign(&(*signer), &mut input_ref, &mut output_ref);
+    let result = builder.sign(&(*signer), &from_c_str(format), &mut input_ref, &mut output_ref).map_err(C2paError::from);
+
     *builder_ptr = Box::into_raw(builder);
     match result {
         std::result::Result::Ok(_) => 0,
@@ -576,7 +577,7 @@ pub unsafe extern "C" fn c2pa_release_manifest_reader(reader: *mut ManifestStore
 /// # Safety
 /// can only be released once and is invalid after this call
 #[no_mangle]
-pub unsafe extern "C" fn c2pa_release_manifest_builder(builder: *mut ManifestBuilder) {
+pub unsafe extern "C" fn c2pa_release_manifest_builder(builder: *mut Builder) {
     if builder.is_null() {
         return;
     }

@@ -25,7 +25,7 @@ mod stream;
 pub use c_api::C2paStream;
 pub use error::{Error as C2paError, Result};
 pub use ingredient_builder::IngredientBuilder;
-pub use manifest_builder::{ManifestBuilder, ManifestBuilderSettings};
+pub use c2pa::Builder;
 pub use manifest_store_reader::ManifestStoreReader;
 pub use signer::{C2paSigner, SignerCallback, SignerConfig};
 pub use stream::{SeekMode, Stream, StreamAdapter, StreamError, StreamResult};
