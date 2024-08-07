@@ -17,12 +17,6 @@ pub struct ManifestBuilder {
 }
 
 impl ManifestBuilder {
-    pub fn new(definition: String) -> Self {
-        Self {
-            builder: std::result::Result::expect(Builder::from_json(&definition), "Failed to create builder"),
-        }
-    }
-
     pub fn add_ingredient<T>(&mut self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
         
         self.builder.add_ingredient(ingredient_json, format, &mut stream);

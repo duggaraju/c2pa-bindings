@@ -15,6 +15,7 @@ use std::ffi::{c_char, c_int, c_long, CStr, CString};
 use std::result::Result::Ok;
 use c2pa::settings::load_settings_from_str;
 use serde_json::json;
+
 // use uniffi::deps::anyhow::Ok;
 
 use crate::{
@@ -460,10 +461,11 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
     }).to_string();
 
     load_settings_from_str(&settings, "json").map_err(C2paError::from);
+    
+    let builder = c2pa::Builder::from_json(&definition).map_err(C2paError::from).unwrap();
+    let manifest_builder = ManifestBuilder { builder };
 
-    let builder = ManifestBuilder::new(definition);
-
-    Box::into_raw(Box::new(builder))
+    Box::into_raw(Box::new(manifest_builder))
 
     // match builder.from_json(&json) {
     //     Ok(_) => Box::into_raw(Box::new(builder)),

@@ -71,8 +71,6 @@ dictionary ManifestBuilderSettings {
 };
 
 interface ManifestBuilder {
-  constructor(string definition);
-  
   [Throws=C2paError]
   void from_json([ByRef] string json);
 
