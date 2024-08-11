@@ -19,6 +19,7 @@ use serde_json::json;
 
 // use uniffi::deps::anyhow::Ok;
 
+use crate::manifest_builder::ManifestBuilder;
 use crate::{
     C2paError, C2paSigner, ManifestStoreReader, SeekMode,
     SignerConfig, StreamAdapter, StreamError, StreamResult,
@@ -453,7 +454,7 @@ pub unsafe extern "C" fn c2pa_manifest_reader_resource(
 pub unsafe extern "C" fn c2pa_create_manifest_builder(
     settings: &ManifestBuilderSettingsC,
     json: *const c_char,
-) -> *mut Builder {
+) -> *mut ManifestBuilder {
     let definition = from_c_str(json);
 
     let settings = json!({
@@ -468,10 +469,13 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
         return std::ptr::null_mut();
     }
     
-    let builder = Builder::from_json(&definition).map_err(C2paError::from);
+    let c2pa_builder = Builder::from_json(&definition).map_err(C2paError::from);
 
-    match builder{
-        Ok(builder) => Box::into_raw(Box::new(builder)),
+    match c2pa_builder{
+        Ok(c2pa_builder) => {
+            let builder = ManifestBuilder::new(c2pa_builder);
+            Box::into_raw(Box::new(builder))
+        },
         Err(e) => {
             e.set_last();
             std::ptr::null_mut()
@@ -481,7 +485,7 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
 
 #[no_mangle]
 pub unsafe extern "C" fn c2pa_add_builder_resource(
-    builder_ptr: *mut *mut Builder,
+    builder_ptr: *mut *mut ManifestBuilder,
     id: *const c_char,
     stream: *mut C2paStream,
 ) -> c_int{
@@ -511,8 +515,7 @@ pub unsafe extern "C" fn c2pa_add_builder_resource(
 /// * `output` - optional pointer to a C2paStream
 ///
 pub unsafe extern "C" fn c2pa_manifest_builder_sign(
-    builder_ptr: *mut *mut Builder,
-    format: *const c_char,
+    builder_ptr: *mut *mut ManifestBuilder,
     signer: *const C2paSigner,
     input: *mut C2paStream,
     output: *mut C2paStream,
@@ -520,7 +523,7 @@ pub unsafe extern "C" fn c2pa_manifest_builder_sign(
     let mut builder = Box::from_raw(*builder_ptr);
     let mut input_ref = StreamAdapter::from_stream_mut(&mut (*input));
     let mut output_ref = StreamAdapter::from_stream_mut(&mut (*output));
-    let result = builder.sign(&(*signer), &from_c_str(format), &mut input_ref, &mut output_ref).map_err(C2paError::from);
+    let result = builder.sign(&(*signer), &mut input_ref, &mut output_ref).map_err(C2paError::from);
 
     *builder_ptr = Box::into_raw(builder);
     match result {

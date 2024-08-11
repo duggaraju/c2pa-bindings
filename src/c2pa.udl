@@ -87,20 +87,10 @@ interface C2paSigner {
   void configure([ByRef] SignerConfig config);
 };
 
-interface ResourceStore {
-  dictionary resources;
+interface ManifestBuilder {
+  [Throws=C2paError]
+  void from_json([ByRef] string json);
 
-  string? base_path = null;
-
-  string? label = null;
-};
-
-interface Builder {
-  string definition;
-
-  string remote_url;
-
-  boolean no_embed = true;
-
-  ResourceStore resources;
+  [Throws=C2paError]
+  bytes sign_stream([ByRef] C2paSigner signer, [ByRef] Stream input, [ByRef] Stream output);
 };
