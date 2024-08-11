@@ -53,6 +53,6 @@ impl ManifestBuilder {
         let mut dest = Cursor::new(vec_dest);
 
         let result = self.builder.sign(signer, &format, &mut source, &mut dest).map_err(C2paError::from)?;
-        return Ok(result.to_vec());
+        Ok(result.to_vec())
     }
 }
