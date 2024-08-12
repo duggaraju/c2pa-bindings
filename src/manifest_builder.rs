@@ -1,4 +1,4 @@
-use std::{io::Cursor, sync::RwLock};
+use std::{io::Cursor, sync::{Arc, RwLock}};
 
 use c2pa::{Builder, CAIRead, Signer, CAIReadWrite,};
 
@@ -19,22 +19,29 @@ impl ManifestBuilder {
 
     pub fn add_ingredient<T>(&self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
         
-        self.builder.write().unwrap().add_ingredient(ingredient_json, format, &mut stream);
+        let _ = self.builder.write().unwrap().add_ingredient(ingredient_json, format, &mut stream);
         Ok(self)
     }
 
     pub fn add_resource(&self, resource_id: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> {
 
-        self.builder.write().unwrap().add_resource(&resource_id, &mut stream);
+        let _ = self.builder.write().unwrap().add_resource(&resource_id, &mut stream);
         Ok(self)
     }
 
-    pub fn from_json(&mut self, json: &str) -> Result<()> {
-        self.builder = RwLock::new(c2pa::Builder::from_json(json).map_err(C2paError::from)?);
-        Ok(())
+    // pub fn from_json(&mut self, json: &str) -> Result<()> {
+    //     self.builder = RwLock::new(c2pa::Builder::from_json(json).map_err(C2paError::from)?);
+    //     Ok(())
+    // }
+
+    pub fn from_json(&self, json: &str) -> Arc<ManifestBuilder> {
+        let builder_result = c2pa::Builder::from_json(json);
+        let locked_builder = RwLock::new(builder_result.unwrap());
+        let builder = ManifestBuilder::new(locked_builder);
+        Arc::new(builder)
     }
 
-    pub fn sign_stream(&mut self, signer: &C2paSigner, input_mut: &dyn Stream, output_mut: &dyn Stream, ) -> Result<Vec<u8>> {
+    pub fn sign_stream(&self, signer: &C2paSigner, input_mut: &dyn Stream, output_mut: &dyn Stream, ) -> Result<Vec<u8>> {
         let mut input = StreamAdapter::from(input_mut);
         let mut output = StreamAdapter::from(output_mut);
         self.sign(signer, &mut input, &mut output)

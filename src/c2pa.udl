@@ -88,8 +88,7 @@ interface C2paSigner {
 };
 
 interface ManifestBuilder {
-  [Throws=C2paError]
-  void from_json([ByRef] string json);
+  ManifestBuilder from_json([ByRef] string json);
 
   [Throws=C2paError]
   bytes sign_stream([ByRef] C2paSigner signer, [ByRef] Stream input, [ByRef] Stream output);
