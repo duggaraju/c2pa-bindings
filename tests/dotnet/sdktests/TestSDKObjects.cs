@@ -9,8 +9,27 @@ using Azure.Security.KeyVault.Secrets;
 
 namespace sdktests
 {
-    public class TestSDKObjects
+    public class CredentialsFixture
     {
+        public TokenCredential GetCredentials()
+        {
+#if DEBUG            
+            return new DefaultAzureCredential(true);
+#else
+            return new DefaultAzureCredential();
+#endif
+        }
+    }
+
+    public class TestSDKObjects : IClassFixture<CredentialsFixture>
+    {
+        private readonly TokenCredential _credentials;
+
+        public TestSDKObjects(CredentialsFixture fixture)
+        {
+            _credentials = fixture.GetCredentials();
+        }
+
         [Theory]
         [InlineData("A valid string", "A valid string")]
         [InlineData("", "")]
@@ -88,7 +107,7 @@ namespace sdktests
         public void TestManifestReaderReadsAndSerializesManifestCorrectly()
         {
             // Arrange
-            ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(_credentials);
 
             string outputPath = TestUtils.CreateSignedFile("test_samples/space_sample.jpg", "test_samples/space_sample_signed.jpg", signer);
 
@@ -141,7 +160,7 @@ namespace sdktests
             string format = "image/jpeg";
             string parentName = "ingredient_sample.jpg";
 
-            ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(_credentials);
 
             ManifestDefinition definition = new()
             {
@@ -158,8 +177,9 @@ namespace sdktests
             builder.AddIngredient(new(parentName, format, Relationship.parentOf));
 
             string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI should be null.");
-            builder.AddResource(thumbURI, "../../../test_samples/ingredient_sample.jpg");
+            builder.AddResource(thumbURI, "test_samples/ingredient_sample.jpg");
 
+            builder.Sign(inputFile, "signed_files/ingredient_signed.jpg");
             // Assert
         }
     }

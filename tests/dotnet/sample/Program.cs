@@ -31,7 +31,16 @@ namespace C2paSample
 
         private static void ValidateFile(string inputFile)
         {
-            return;
+            ManifestStoreReader reader = new();
+            var manifest = reader.ReadFromFile(inputFile);
+            if (manifest != null)
+            {
+                Console.WriteLine(manifest.ToJson());
+            }
+            else
+            {
+                Console.WriteLine("No manifest found in file.");
+            }
         }
 
         private static void SignFile(string inputFile, string outputFile)

@@ -24,24 +24,14 @@ namespace C2pa
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
         }
 
-        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintion)
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintion):
+            this(settings, callback, ManifestDefinition.FromJson(manifestDefintion))
         {
-            _settings = settings;
-            _callback = callback;
-            _definition = JsonSerializer.Deserialize<ManifestDefinition>(manifestDefintion, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
-
-            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
-            _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
         }
 
-        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback)
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback) :
+            this(settings, callback, new ManifestDefinition())
         {
-            _settings = settings;
-            _callback = callback;
-            _definition = new ManifestDefinition();
-
-            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
-            _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
         }
 
         unsafe long Sign(byte* data, ulong len, byte* signature, long sig_max_size)
@@ -60,7 +50,7 @@ namespace C2pa
             }
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
-            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.GetManifestJson());
+            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.ToJson());
             if (_builder == null)
             {
                 Sdk.CheckError();
@@ -93,17 +83,6 @@ namespace C2pa
             return _definition;
         }
 
-        public void FromJsonFile(string path)
-        {
-            string json = System.IO.File.ReadAllText(path);
-            FromJson(json);
-        }
-
-        public void FromJson(string json)
-        {
-            _definition = JsonSerializer.Deserialize<ManifestDefinition>(json, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
-        }
-
         public void SetManifestDefinition(ManifestDefinition manifest)
         {
             _definition = manifest;
@@ -134,7 +113,7 @@ namespace C2pa
             _definition.Title = title;
         }
 
-        public void AddAssertion(BaseAssertion assertion)
+        public void AddAssertion(Assertion assertion)
         {
             _definition.Assertions.Add(assertion);
         }

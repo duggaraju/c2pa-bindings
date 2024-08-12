@@ -1,16 +1,21 @@
 ﻿using System.Text.Json;
-using Azure.Identity;
+using Azure.Core;
 using C2pa;
 
 namespace sdktests
 {
-    public class AssertionTypeTesting
+    public class AssertionTypeTesting : IClassFixture<CredentialsFixture>
     {
+        private readonly TokenCredential _credentials;
+        public AssertionTypeTesting(CredentialsFixture fixture)
+        {
+            _credentials = fixture.GetCredentials();
+        }
+
         [Fact]
         public void TestingActionAssertTypeMaintainsDataDuringSerialization()
         {
-            // Arrange 
-            ActionAssertionData data = new()
+            C2paAction data = new()
             {
                 Action = "Some Action",
                 When = new DateTime(2024, 7, 18).ToString("yyyy-MM-ddTHH:mm:ss"),
@@ -19,28 +24,30 @@ namespace sdktests
                 InstanceID = "u11245151",
             };
 
-            ActionAssertion assertion = new(data);
+            // Arrange 
+            ActionAssertion assertion = new(new (){ Actions = { data } });
 
             // Act
 
-            string json = JsonSerializer.Serialize(assertion, BaseAssertion.JsonOptions);
+            string json = assertion.ToJson();
 
-            ActionAssertion? result = JsonSerializer.Deserialize<ActionAssertion>(json, BaseAssertion.JsonOptions);
+            var result = Assertion.FromJson<ActionAssertion>(json);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(assertion.Label, result.Label);
-            Assert.Equal(data.Action, result.Data.Action);
-            Assert.Equal(data.When, result.Data.When);
+            Assert.Equal(data.Action, result.Data.Actions[0].Action);
+            Assert.Equal(data.When, result.Data.Actions[0].When);
         }
 
         [Fact]
         public void TestCustomAssertionMaintainsDataDuringSerialization()
         {
             // Arrange
-            var data = new {
-                key1= "value1",
-                key2= "value2",
+            var data = new
+            {
+                key1 = "value1",
+                key2 = "value2",
                 key3 = 1234,
                 key4 = new
                 {
@@ -51,9 +58,9 @@ namespace sdktests
             CustomAssertion assertion = new("Some Unique Label", data);
             // Act
 
-            string json = JsonSerializer.Serialize(assertion, BaseAssertion.JsonOptions);
+            string json = assertion.ToJson();
 
-            CustomAssertion? result = JsonSerializer.Deserialize<CustomAssertion>(json, BaseAssertion.JsonOptions);
+            CustomAssertion? result = Assertion.FromJson<CustomAssertion>(json);
             dynamic? resultData = result?.GetDataAsExpandoObject();
 
             // Assert
@@ -68,13 +75,13 @@ namespace sdktests
         public void TestCustomAssertionCanUseOtherAssertionDataTypesForDataField()
         {
             // Arrange
-            CreativeWorkAssertionData data = new() { Context = "Some important Context", Type = "Test", Authors = [new("Person", "Test Account 1")]};
+            CreativeWorkAssertionData data = new() { Context = "Some important Context", Type = "Test", Authors = [new("Person", "Test Account 1")] };
             CustomAssertion assertion = new("Some Unique Label", data);
 
             // Act
-            string json = JsonSerializer.Serialize(assertion, BaseAssertion.JsonOptions);
+            string json = assertion.ToJson();
 
-            CustomAssertion? result = JsonSerializer.Deserialize<CustomAssertion>(json, BaseAssertion.JsonOptions);
+            var result = Assertion.FromJson<CustomAssertion>(json);
             dynamic? resultData = result?.GetDataAsExpandoObject();
 
             // Assert
@@ -92,9 +99,9 @@ namespace sdktests
             ClaimThumbnailAssertion assertion = new(data);
 
             // Act
-            string json = JsonSerializer.Serialize(assertion, BaseAssertion.JsonOptions);
+            string json = assertion.ToJson();
 
-            object? result = JsonSerializer.Deserialize<BaseAssertion>(json, BaseAssertion.JsonOptions);
+            var result = Assertion.FromJson<ClaimThumbnailAssertion>(json);
 
             // Assert
             Assert.NotNull(result);
@@ -112,9 +119,9 @@ namespace sdktests
 
             // Act
 
-            string json = JsonSerializer.Serialize(assertion, BaseAssertion.JsonOptions);
+            string json = assertion.ToJson();
 
-            object? result = JsonSerializer.Deserialize<BaseAssertion>(json, BaseAssertion.JsonOptions);
+            var result = Assertion.FromJson<CustomAssertion>(json);
 
             // Assert
 
@@ -133,12 +140,12 @@ namespace sdktests
         {
             // Arrange
 
-            CustomAssertion assertion = new(label, new BaseAssertionData());
+            CustomAssertion assertion = new(label, new AssertionData());
 
             // Act
-            string json = JsonSerializer.Serialize(assertion, BaseAssertion.JsonOptions);
+            string json = assertion.ToJson();
 
-            object? result = JsonSerializer.Deserialize<BaseAssertion>(json, BaseAssertion.JsonOptions);
+            var result = Assertion.FromJson<CustomAssertion>(json);
 
             // Assert
 
@@ -150,7 +157,7 @@ namespace sdktests
         public void TestManifestStoreDeserializesAssertionTypesCorrectly()
         {
             // Arrange
-            TestUtils.KeyVaultSigner signer = new(new DefaultAzureCredential(true));
+            TestUtils.KeyVaultSigner signer = new(_credentials);
             string inputPath = "test_samples/assertion_sample.jpg";
             string outputPath = "test_samples/assertion_sample_signed.jpg";
 
@@ -183,25 +190,25 @@ namespace sdktests
         public void TestMultipleDifferentAssertionsAreSerializedAndDeserializedCorrectly()
         {
             // Arrange
-            TestUtils.KeyVaultSigner signer = new( new DefaultAzureCredential(true));
+            TestUtils.KeyVaultSigner signer = new(_credentials);
 
             ManifestBuilder builder = new(ManifestBuilder.CreateBuilderSettings("Testing Multi Assertions"), signer);
             builder.SetTitle("Testing Multi Assertions");
             builder.SetFormat("jpg");
-            builder.AddAssertion(new ActionAssertion(new("Some Action", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), "Some Software Agent", "Some Changed", "u11245151")));
+            builder.AddAssertion(new ActionAssertion(new() { Actions = { new C2paAction("Some Action", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), "Some Software Agent", "Some Changed", "u11245151") } }));
             builder.AddAssertion(new CreativeWorkAssertion(new("Test Context", "Creation", [new("Person", "Isaiah"), new("System", "Test Signer")])));
 
             // Act
-            string json = JsonSerializer.Serialize(builder.GetManifestDefinition(), BaseAssertion.JsonOptions);
+            string json = builder.GetManifestDefinition().ToJson();
 
-            Manifest? manifest = JsonSerializer.Deserialize<Manifest>(json, BaseAssertion.JsonOptions);
+            var manifest = ManifestDefinition.FromJson(json);
 
             // Assert
             Assert.NotNull(manifest);
             Assert.Equal("Testing Multi Assertions", manifest.Title);
             Assert.IsType<ActionAssertion>(manifest.Assertions[0]);
             Assert.IsType<ActionAssertionData>(manifest.Assertions[0].Data);
-            Assert.Equal("Some Action", (manifest.Assertions[0].Data as ActionAssertionData)?.Action);
+            Assert.Equal("Some Action", (manifest.Assertions[0].Data as ActionAssertionData)!.Actions[0].Action);
             Assert.IsType<CreativeWorkAssertion>(manifest.Assertions[1]);
             Assert.IsType<CreativeWorkAssertionData>(manifest.Assertions[1].Data);
             Assert.Equal("Test Context", (manifest.Assertions[1].Data as CreativeWorkAssertionData)?.Context);

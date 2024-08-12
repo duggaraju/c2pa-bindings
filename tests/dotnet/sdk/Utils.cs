@@ -1,16 +1,30 @@
 ﻿using C2pa.Bindings;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace C2pa
 {
     public static class Utils
     {
-        public static object GetAssertionTypeFromLabel(string label)
+        public static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            Converters =
+            {
+                new AssertionTypeConverter(),
+                new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower)
+            },
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            WriteIndented = true
+        };
+
+        public static Type GetAssertionTypeFromLabel(string label)
         {
             return label switch
             {
-                "base" => typeof(BaseAssertion),
+                "base" => typeof(Assertion),
                 "c2pa.action" => typeof(ActionAssertion),
                 "c2pa.thumbnail" => typeof(ThumbnailAssertion),
                 string s when Regex.IsMatch(s, @"c2pa\.thumbnail\.claim.*") => typeof(ClaimThumbnailAssertion),
