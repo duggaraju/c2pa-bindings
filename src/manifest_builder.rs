@@ -1,4 +1,4 @@
-use std::io::Cursor;
+use std::{io::Cursor, sync::RwLock};
 
 use c2pa::{Builder, CAIRead, Signer, CAIReadWrite,};
 
@@ -7,11 +7,11 @@ use crate::{
 };
 
 pub struct ManifestBuilder {
-    pub builder: Builder,
+    pub builder: RwLock<Builder>
 }
 
 impl ManifestBuilder {
-    pub fn new(builder: Builder) -> Self {
+    pub fn new(builder: RwLock<Builder>) -> Self {
         Self {
             builder
         }
@@ -19,18 +19,18 @@ impl ManifestBuilder {
 
     pub fn add_ingredient<T>(&mut self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
         
-        self.builder.add_ingredient(ingredient_json, format, &mut stream);
+        self.builder.write().unwrap().add_ingredient(ingredient_json, format, &mut stream);
         Ok(self)
     }
 
     pub fn add_resource(&mut self, resource_id: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> {
 
-        self.builder.add_resource(&resource_id, &mut stream);
+        self.builder.write().unwrap().add_resource(&resource_id, &mut stream);
         Ok(self)
     }
 
     pub fn from_json(&mut self, json: &str) -> Result<()> {
-        self.builder = c2pa::Builder::from_json(json).map_err(C2paError::from)?;
+        self.builder = RwLock::new(c2pa::Builder::from_json(json).map_err(C2paError::from)?);
         Ok(())
     }
 
@@ -41,7 +41,7 @@ impl ManifestBuilder {
     }
 
     pub fn sign(&mut self, signer: &dyn Signer, input: &mut dyn CAIRead, output: &mut dyn CAIReadWrite) -> Result<Vec<u8>> {
-        let format = self.builder.definition.format.clone();
+        let format = self.builder.read().unwrap().definition.format.clone();
 
         let mut vec_source = Vec::new();
         let mut vec_dest = Vec::new();
@@ -52,7 +52,7 @@ impl ManifestBuilder {
         let mut source = Cursor::new(vec_source);
         let mut dest = Cursor::new(vec_dest);
 
-        let result = self.builder.sign(signer, &format, &mut source, &mut dest).map_err(C2paError::from)?;
+        let result = self.builder.write().unwrap().sign(signer, &format, &mut source, &mut dest).map_err(C2paError::from)?;
         Ok(result.to_vec())
     }
 }

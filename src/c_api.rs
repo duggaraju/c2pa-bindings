@@ -13,8 +13,8 @@
 
 use std::ffi::{c_char, c_int, c_long, CStr, CString};
 use std::result::Result::Ok;
+use std::sync::RwLock;
 use c2pa::settings::load_settings_from_str;
-use std::sync::{Arc, Mutex};
 use c2pa::Builder;
 use serde_json::json;
 
@@ -455,7 +455,7 @@ pub unsafe extern "C" fn c2pa_manifest_reader_resource(
 pub unsafe extern "C" fn c2pa_create_manifest_builder(
     settings: &ManifestBuilderSettingsC,
     json: *const c_char,
-) -> *mut Arc<Mutex<ManifestBuilder>> {
+) -> *mut ManifestBuilder {
     let definition = from_c_str(json);
 
     let settings = json!({
@@ -474,7 +474,8 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
 
     match c2pa_builder{
         Ok(c2pa_builder) => {
-            let builder = Arc::new(Mutex::new(ManifestBuilder::new(c2pa_builder)));
+            let locked_builder = RwLock::new(c2pa_builder);
+            let builder = ManifestBuilder::new(locked_builder);
             Box::into_raw(Box::new(builder))
         },
         Err(e) => {
@@ -486,13 +487,11 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
 
 #[no_mangle]
 pub unsafe extern "C" fn c2pa_add_builder_resource(
-    builder_ptr: *mut *mut Arc<Mutex<ManifestBuilder>>,
+    builder_ptr: *mut *mut ManifestBuilder,
     id: *const c_char,
     stream: *mut C2paStream,
 ) -> c_int{
-    let arc_builder = Box::from_raw(*builder_ptr);
-
-    let mut builder = arc_builder.lock().unwrap();
+    let mut builder = Box::from_raw(*builder_ptr);
 
     let mut source = StreamAdapter::from_stream_mut(&mut (*stream));
     
@@ -518,21 +517,19 @@ pub unsafe extern "C" fn c2pa_add_builder_resource(
 /// * `output` - optional pointer to a C2paStream
 ///
 pub unsafe extern "C" fn c2pa_manifest_builder_sign(
-    builder_ptr: *mut *mut Arc<Mutex<ManifestBuilder>>,
+    builder_ptr: *mut *mut ManifestBuilder,
     signer: *const C2paSigner,
     input: *mut C2paStream,
     output: *mut C2paStream,
 ) -> c_int {
-    let arc_builder = Box::from_raw(*builder_ptr);
-    let result;
-    {
-        let mut builder = arc_builder.lock().unwrap();
-        let mut input_ref = StreamAdapter::from_stream_mut(&mut (*input));
-        let mut output_ref = StreamAdapter::from_stream_mut(&mut (*output));
-        result = builder.sign(&(*signer), &mut input_ref, &mut output_ref).map_err(C2paError::from);
-    }
 
-    *builder_ptr = Box::into_raw(arc_builder);
+    let mut builder = Box::from_raw(*builder_ptr);
+    let mut input_ref = StreamAdapter::from_stream_mut(&mut (*input));
+    let mut output_ref = StreamAdapter::from_stream_mut(&mut (*output));
+    let result = builder.sign(&(*signer), &mut input_ref, &mut output_ref).map_err(C2paError::from);
+
+    *builder_ptr = Box::into_raw(builder);
+
     match result {
         std::result::Result::Ok(_) => 0,
         Err(e) => {
@@ -587,7 +584,7 @@ pub unsafe extern "C" fn c2pa_release_manifest_reader(reader: *mut ManifestStore
 /// # Safety
 /// can only be released once and is invalid after this call
 #[no_mangle]
-pub unsafe extern "C" fn c2pa_release_manifest_builder(builder: *mut Arc<Mutex<ManifestBuilder>>) {
+pub unsafe extern "C" fn c2pa_release_manifest_builder(builder: *mut ManifestBuilder) {
     if builder.is_null() {
         return;
     }
