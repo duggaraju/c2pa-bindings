@@ -508,6 +508,28 @@ pub unsafe extern "C" fn c2pa_add_builder_resource(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn c2pa_add_builder_ingredient(
+    builder_ptr: *mut *mut ManifestBuilder,
+    ingredient_json: *const c_char,
+    format: *const c_char,
+    stream: *mut C2paStream,
+) -> c_int {
+    let builder = Box::from_raw(*builder_ptr);
+    let mut source = StreamAdapter::from_stream_mut(&mut (*stream));
+    let ingredient_json = from_c_str(ingredient_json);
+    let format = from_c_str(format);
+    let result = builder.add_ingredient(&ingredient_json, &format, &mut source).map_err(C2paError::from);
+
+    match result {
+        Ok(_) => 0,
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
 /// Sign using a ManifestBuilder
 ///
 /// # Arguments
