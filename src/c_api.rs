@@ -491,7 +491,7 @@ pub unsafe extern "C" fn c2pa_add_builder_resource(
     id: *const c_char,
     stream: *mut C2paStream,
 ) -> c_int{
-    let mut builder = Box::from_raw(*builder_ptr);
+    let builder = Box::from_raw(*builder_ptr);
 
     let mut source = StreamAdapter::from_stream_mut(&mut (*stream));
     
@@ -523,7 +523,7 @@ pub unsafe extern "C" fn c2pa_manifest_builder_sign(
     output: *mut C2paStream,
 ) -> c_int {
 
-    let mut builder = Box::from_raw(*builder_ptr);
+    let builder = Box::from_raw(*builder_ptr);
     let mut input_ref = StreamAdapter::from_stream_mut(&mut (*input));
     let mut output_ref = StreamAdapter::from_stream_mut(&mut (*output));
     let result = builder.sign(&(*signer), &mut input_ref, &mut output_ref).map_err(C2paError::from);

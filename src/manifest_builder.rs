@@ -17,13 +17,13 @@ impl ManifestBuilder {
         }
     }
 
-    pub fn add_ingredient<T>(&mut self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
+    pub fn add_ingredient<T>(&self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
         
         self.builder.write().unwrap().add_ingredient(ingredient_json, format, &mut stream);
         Ok(self)
     }
 
-    pub fn add_resource(&mut self, resource_id: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> {
+    pub fn add_resource(&self, resource_id: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> {
 
         self.builder.write().unwrap().add_resource(&resource_id, &mut stream);
         Ok(self)
@@ -40,7 +40,7 @@ impl ManifestBuilder {
         self.sign(signer, &mut input, &mut output)
     }
 
-    pub fn sign(&mut self, signer: &dyn Signer, input: &mut dyn CAIRead, output: &mut dyn CAIReadWrite) -> Result<Vec<u8>> {
+    pub fn sign(&self, signer: &dyn Signer, input: &mut dyn CAIRead, output: &mut dyn CAIReadWrite) -> Result<Vec<u8>> {
         let format = self.builder.read().unwrap().definition.format.clone();
 
         let mut vec_source = Vec::new();
