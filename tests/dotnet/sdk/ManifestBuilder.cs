@@ -3,7 +3,8 @@ using System.Text.Json;
 
 namespace C2pa
 {
-    public class ManifestBuilder{
+    public class ManifestBuilder
+    {
 
         private ManifestDefinition _definition;
         private readonly ManifestBuilderSettings _settings;
@@ -13,33 +14,25 @@ namespace C2pa
 
         private ResourceStore? _resources;
 
-        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition){
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition)
+        {
             _settings = settings;
             _callback = callback;
             _definition = definition;
-            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.GetManifestJson());
+            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.ToJson());
 
             C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
         }
 
-        public unsafe ManifestBuilder (ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintion){
-            _settings = settings;
-            _callback = callback;
-            _definition = JsonSerializer.Deserialize<ManifestDefinition>(manifestDefintion, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
-            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.GetManifestJson());
-
-            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
-            _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintion):
+            this(settings, callback, ManifestDefinition.FromJson(manifestDefintion))
+        {
         }
 
-        public unsafe ManifestBuilder ( ManifestBuilderSettings settings, ISignerCallback callback){
-            _settings = settings;
-            _callback = callback;
-            _definition = new ManifestDefinition();
-
-            C2pa.Bindings.SignerCallback c = (data, len, hash, max_len) => Sign(data, len, hash, max_len);
-            _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback) :
+            this(settings, callback, new ManifestDefinition())
+        {
         }
 
         unsafe long Sign(byte* data, ulong len, byte* signature, long sig_max_size)
@@ -58,6 +51,19 @@ namespace C2pa
             }
             using var inputStream = new StreamAdapter(new FileStream(input, FileMode.Open));
             using var outputStream = new StreamAdapter(new FileStream(output, FileMode.Create));
+            if (_builder == null)
+            {
+                Sdk.CheckError();
+            }
+
+            if (_resources != null)
+            {
+                foreach (var (identifier, path) in _resources.Resources)
+                {
+                    using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
+                    c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
+                }
+            }
 
             var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
             c2pa.C2paReleaseManifestBuilder(_builder);
@@ -67,24 +73,14 @@ namespace C2pa
             }
         }
 
-        public static ManifestBuilderSettings CreateBuilderSettings(string claimGenerator, string TrustSettings = "{}"){
-            return new ManifestBuilderSettings(){ClaimGenerator = claimGenerator, TrustSettings = TrustSettings};
+        public static ManifestBuilderSettings CreateBuilderSettings(string claimGenerator, string TrustSettings = "{}")
+        {
+            return new ManifestBuilderSettings() { ClaimGenerator = claimGenerator, TrustSettings = TrustSettings };
         }
 
         public ManifestDefinition GetManifestDefinition()
         {
             return _definition;
-        }
-
-        public void FromJsonFile(string path)
-        {
-            string json = System.IO.File.ReadAllText(path);
-            FromJson(json);
-        }
-        
-        public void FromJson(string json)
-        {
-            _definition = JsonSerializer.Deserialize<ManifestDefinition>(json, BaseAssertion.JsonOptions) ?? throw new JsonException("Manifest JSON is Invalid");
         }
 
         public void SetManifestDefinition(ManifestDefinition manifest)
@@ -107,7 +103,8 @@ namespace C2pa
             _definition.Format = format;
         }
 
-        public void SetFormatFromFilename(string filename){
+        public void SetFormatFromFilename(string filename)
+        {
             _definition.Format = filename[(filename.LastIndexOf('.') + 1)..];
         }
 
@@ -116,9 +113,9 @@ namespace C2pa
             _definition.Title = title;
         }
 
-        public void AddAssertion(BaseAssertion assertion)
+        public void AddAssertion(Assertion assertion)
         {
-           _definition.Assertions.Add(assertion);
+            _definition.Assertions.Add(assertion);
         }
 
         public void AddIngredient(Ingredient ingredient)
@@ -126,14 +123,16 @@ namespace C2pa
             _definition.Ingredients.Add(ingredient);
         }
 
-        public void AddResource (string identifier, string path){
+        public void AddResource(string identifier, string path)
+        {
             _resources ??= new ResourceStore();
             _resources.Resources.Add(identifier, path);
             using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
             c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
         }
 
-        public static string GenerateInstanceID() {
+        public static string GenerateInstanceID()
+        {
             return "xmp:iid:" + Guid.NewGuid().ToString();
         }
 

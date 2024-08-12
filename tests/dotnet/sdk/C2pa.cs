@@ -4,28 +4,6 @@ using C2pa.Bindings;
 
 namespace C2pa
 {
-
-    public static partial class Utils
-    {
-        public unsafe static string FromCString(sbyte* ptr, bool ownsResource = false)
-        {
-            if (ptr == null)
-            {
-                return string.Empty;
-            }
-            var value = Marshal.PtrToStringUTF8(new nint(ptr))!;
-            if (!ownsResource) 
-                c2pa.C2paReleaseString(ptr);
-            
-            return value;
-        }
-
-        public static bool FilePathValid(string path)
-        {
-            return !string.IsNullOrEmpty(path) && System.IO.File.Exists(path);
-        }
-    }
-
     unsafe class StreamAdapter : StreamContext
     {
         private readonly Stream _stream;
@@ -49,10 +27,10 @@ namespace C2pa
             return c2pa.C2paCreateStream(this, Read, Seek, Write);
         }
 
-#if LINUX
-        private static int Seek(nint context, long offset, SeekMode mode)
-#else
+#if WINDOWS
         private static int Seek(nint context, int offset, SeekMode mode)
+#else
+        private static int Seek(nint context, long offset, SeekMode mode)
 #endif
         {
             var stream = (Stream)GCHandle.FromIntPtr(context).Target!;
@@ -77,34 +55,7 @@ namespace C2pa
         }
     }
 
-    // Example manifest JSON
-    // {
-    //     "claim_generator_info": [
-    //         {
-    //             "name": "{{claimName}}",
-    //             "version": "0.0.1"
-    //         }
-    //     ],
-    //     "format": "{{ext}}",
-    //     "title": "{{manifestTitle}}",
-    //     "ingredients": [],
-    //     "assertions": [
-    //         {   "label": "stds.schema-org.CreativeWork",
-    //             "data": {
-    //                 "@context": "http://schema.org/",
-    //                 "@type": "CreativeWork",
-    //                 "author": [
-    //                     {   "@type": "Person",
-    //                         "name": "{{authorName}}"
-    //                     }
-    //                 ]
-    //             },
-    //             "kind": "Json"
-    //         }
-    //     ]
-    // }
-
-    public class ManifestDefinition (string format = "application/octet-stream")
+    public class ManifestDefinition(string format = "application/octet-stream")
     {
         public string? Vendor { get; set; } = null;
         public List<ClaimGeneratorInfo> ClaimGeneratorInfo { get; set; } = [];
@@ -113,13 +64,19 @@ namespace C2pa
         public string InstanceID { get; set; } = ManifestBuilder.GenerateInstanceID();
         public Thumbnail? Thumbnail { get; set; } = null;
         public List<Ingredient> Ingredients { get; set; } = [];
-        public List<BaseAssertion> Assertions { get; set; } = [];
+        public List<Assertion> Assertions { get; set; } = [];
         public List<string>? Redactions { get; set; } = null;
         public string? Label { get; set; } = null;
 
-        public string GetManifestJson()
+        public string ToJson()
         {
-            return JsonSerializer.Serialize(this, BaseAssertion.JsonOptions);
+            return JsonSerializer.Serialize(this, Utils.JsonOptions);
+        }
+
+        public static ManifestDefinition FromJson(string json)
+        {
+            var value = JsonSerializer.Deserialize<ManifestDefinition>(json, Utils.JsonOptions);
+            return value ?? throw new JsonException("Invalid JSON");
         }
     }
 
@@ -141,10 +98,10 @@ namespace C2pa
 
         public SignerConfigC Config => new SignerConfigC
         {
-                Alg = Alg,
-                Certs = Certs,
-                TimeAuthorityUrl = TimeAuthorityUrl,
-                UseOcsp = UseOcsp
+            Alg = Alg,
+            Certs = Certs,
+            TimeAuthorityUrl = TimeAuthorityUrl,
+            UseOcsp = UseOcsp
         };
     }
 
@@ -192,7 +149,7 @@ namespace C2pa
             {
                 return null;
             }
-            return JsonSerializer.Deserialize<ManifestStore>(json, BaseAssertion.JsonOptions);
+            return ManifestStore.FromJson(json);
         }
     }
 
@@ -229,19 +186,21 @@ namespace C2pa
             }
         }
 
-        public static void CheckError () {
+        public static void CheckError()
+        {
             string err;
             unsafe
             {
                 err = Utils.FromCString(c2pa.C2paError());
             }
             if (string.IsNullOrEmpty(err)) return;
-            
+
             string errType = err.Split(' ')[0];
             string errMsg = err;
 
             Exception? exception = ExceptionFactory.GetException(errType, errMsg);
-            if (exception != null) {
+            if (exception != null)
+            {
                 throw exception;
             }
         }

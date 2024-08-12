@@ -28,8 +28,8 @@ namespace sdktests
         public void TestManifestAddedToFileCorrectly(string signerType)
         {
             // Arrange
-            string inputPath = "..\\..\\..\\test_samples\\signing_sample.jpg";
-            string outputPath = $"..\\..\\..\\test_samples\\output_{signerType}_signed.jpg";
+            string inputPath = "test_samples/signing_sample.jpg";
+            string outputPath = $"test_samples/output_{signerType}_signed.jpg";
 
             if (File.Exists(outputPath))
             {
@@ -59,7 +59,7 @@ namespace sdktests
 
             Assert.Equal("C# Test Image", manifest.Title);
             Assert.Equal("C# Test", manifest.ClaimGeneratorInfo[0].Name);
-            Assert.Equal("Isaiah Carrington", (manifest.Assertions[0].Data as CreativeWorkAssertionData)?.Authors[0].Name);
+            Assert.Equal("Isaiah Carrington", ((CreativeWorkAssertion)manifest.Assertions[0]).Data.Authors[0].Name);
             Assert.Equal(Relationship.parentOf, manifest.Ingredients[0].Relationship);
             Assert.Equal("jpg", manifest.Format);
         }
@@ -68,9 +68,9 @@ namespace sdktests
         public void TestMultipleManifestsAddedToFileAndDeserializedCorrectly()
         {
             // Arrange
-            string inputPath = "..\\..\\..\\test_samples\\multi_sample.jpg";
-            string outputPath1 = "..\\..\\..\\test_samples\\multi_signed.jpg";
-            string outputPath2 = "..\\..\\..\\test_samples\\multi_signed2.jpg";
+            string inputPath = "test_samples/multi_sample.jpg";
+            string outputPath1 = "test_samples/multi_signed.jpg";
+            string outputPath2 = "test_samples/multi_signed2.jpg";
 
             if (File.Exists(outputPath1))
             {
@@ -84,7 +84,15 @@ namespace sdktests
 
             ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
 
-            ManifestDefinition manifest1 = new() { ClaimGeneratorInfo = [new("Dotnet Multi Test", "1.0.0-alpha.1")] ,Title = "Manifest 1", Format = "jpg" } ;
+            ManifestDefinition manifest1 = new() 
+            {
+                ClaimGeneratorInfo = 
+                [
+                    new("Dotnet Multi Test", "1.0.0-alpha.1")
+                ],
+                Title = "Manifest 1",
+                Format = "jpg" 
+            };
             ManifestBuilder builder1 = new(new() { ClaimGenerator = "Dotnet Multi Test" }, signer, manifest1);
             CustomAssertion assertion1 = new("Custom Operation", new { name = "ByteDefender", source = "MicroHard" });
             builder1.AddAssertion(assertion1);
@@ -93,7 +101,22 @@ namespace sdktests
             builder2.SetTitle("Manifest 2");
             builder2.SetFormat("jpg");
             builder2.AddClaimGeneratorInfo("Dotnet Multi Test", "1.0.0-alpha.1");
-            builder2.AddAssertion(new ActionAssertion(new() { Action = "A Second Signing", When = "After the first one", SoftwareAgent = "Dotnet SDK", Actors = [ new { name = "Jerry", occupation = "Coder" }] }));
+            builder2.AddAssertion(
+                new ActionAssertion(new()
+                    {
+                        Actions = 
+                        {
+                            new C2paAction
+                            {
+                                Action = "A Second Signing",
+                                When = "After the first one",
+                                SoftwareAgent = "Dotnet SDK",
+                                Actors = [new { name = "Jerry", occupation = "Coder" }]
+                            }
+                        }
+                    }
+                )
+            );
 
             // Act
             builder1.Sign(inputPath, outputPath1);

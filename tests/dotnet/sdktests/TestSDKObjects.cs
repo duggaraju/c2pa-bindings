@@ -9,8 +9,27 @@ using Azure.Security.KeyVault.Secrets;
 
 namespace sdktests
 {
-    public class TestSDKObjects
+    public class CredentialsFixture
     {
+        public TokenCredential GetCredentials()
+        {
+#if DEBUG            
+            return new DefaultAzureCredential(true);
+#else
+            return new DefaultAzureCredential();
+#endif
+        }
+    }
+
+    public class TestSDKObjects : IClassFixture<CredentialsFixture>
+    {
+        private readonly TokenCredential _credentials;
+
+        public TestSDKObjects(CredentialsFixture fixture)
+        {
+            _credentials = fixture.GetCredentials();
+        }
+
         [Theory]
         [InlineData("A valid string", "A valid string")]
         [InlineData("", "")]
@@ -51,7 +70,7 @@ namespace sdktests
         }
 
         [Theory]
-        [InlineData("../../../TestSigning.cs", true)]
+        [InlineData("test_samples/space_sample.jpg", true)]
         [InlineData("./some/invalid/path.pth", false)]
         public void TestUtilsFilePathValidMethod(string path, bool expected)
         {
@@ -88,9 +107,9 @@ namespace sdktests
         public void TestManifestReaderReadsAndSerializesManifestCorrectly()
         {
             // Arrange
-            ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(_credentials);
 
-            string outputPath = TestUtils.CreateSignedFile("../../../test_samples/space_sample.jpg", "../../../test_samples/space_sample_signed.jpg", signer);
+            string outputPath = TestUtils.CreateSignedFile("test_samples/space_sample.jpg", "test_samples/space_sample_signed.jpg", signer);
 
             // Act
 
@@ -116,7 +135,7 @@ namespace sdktests
         public void TestIngrdientSerializedFromManifestCorrectly()
         {
             // Arrange 
-            string inputfile = "../../../test_samples/ingredient_sample.jpg";
+            string inputfile = "test_samples/ingredient_sample.jpg";
 
             ManifestStoreReader reader = new();
 
@@ -136,18 +155,18 @@ namespace sdktests
         public void TestingCreatingASignedFileWithAnIngredient()
         {
             // Arrange
-            string inputFile = "../../../test_samples/ingredient_signing_sample.jpg";
+            string inputFile = "test_samples/ingredient_signing_sample.jpg";
             string title = "pres_edited.jpg";
             string format = "image/jpeg";
             string parentName = "ingredient_sample.jpg";
 
-            ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(_credentials);
 
             ManifestDefinition definition = new()
             {
                 Title = title,
                 Format = format,
-                ClaimGeneratorInfo = [new ClaimGeneratorInfo("C# Test", "1.0.0")],
+                ClaimGeneratorInfo = { new ClaimGeneratorInfo("C# Test", "1.0.0") },
                 Thumbnail = new(format, "manifest_thumbnail.jpg"),
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
             };
@@ -158,8 +177,9 @@ namespace sdktests
             builder.AddIngredient(new(parentName, format, Relationship.parentOf));
 
             string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI should be null.");
-            builder.AddResource(thumbURI, "../../../test_samples/ingredient_sample.jpg");
+            builder.AddResource(thumbURI, "test_samples/ingredient_sample.jpg");
 
+            builder.Sign(inputFile, "signed_files/ingredient_signed.jpg");
             // Assert
         }
     }

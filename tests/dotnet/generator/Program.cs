@@ -52,7 +52,11 @@ class Library : ILibrary
         module.IncludeDirs.Add(Path.Combine(baseDir, "target"));
         module.Headers.Add("c2pa.h");
         module.LibraryDirs.Add(Path.Combine(baseDir, "target/release"));
+#if WINDOWS
         module.Libraries.Add("c2pa_bindings.dll");
+#else
+        module.Libraries.Add("libc2pa_bindings.so");
+#endif
         module.OutputNamespace = "C2pa.Bindings";
     }
 
