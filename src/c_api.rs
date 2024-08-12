@@ -13,9 +13,7 @@
 
 use std::ffi::{c_char, c_int, c_long, CStr, CString};
 use std::result::Result::Ok;
-use std::sync::RwLock;
 use c2pa::settings::load_settings_from_str;
-use c2pa::Builder;
 use serde_json::json;
 
 // use uniffi::deps::anyhow::Ok;
@@ -470,12 +468,10 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
         return std::ptr::null_mut();
     }
     
-    let c2pa_builder = Builder::from_json(&definition).map_err(C2paError::from);
+    let builder = ManifestBuilder::from_json(&definition);
 
-    match c2pa_builder{
-        Ok(c2pa_builder) => {
-            let locked_builder = RwLock::new(c2pa_builder);
-            let builder = ManifestBuilder::new(locked_builder);
+    match builder{
+        Ok(builder) => {
             Box::into_raw(Box::new(builder))
         },
         Err(e) => {
