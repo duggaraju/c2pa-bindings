@@ -30,6 +30,17 @@ namespace C2pa
         {
         }
 
+        private void RebuildBuilder()
+        {
+            if (_builder != null)
+            {
+                c2pa.C2paReleaseManifestBuilder(_builder);
+                Sdk.CheckError();
+            }
+            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.ToJson());
+            Sdk.CheckError();
+        }
+
         unsafe long Sign(byte* data, ulong len, byte* signature, long sig_max_size)
         {
             var span = new ReadOnlySpan<byte>(data, (int)len);
@@ -51,17 +62,7 @@ namespace C2pa
                 Sdk.CheckError();
             }
 
-            if (_resources != null)
-            {
-                foreach (var (identifier, path) in _resources.Resources)
-                {
-                    using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
-                    c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
-                }
-            }
-
             var ret = c2pa.C2paManifestBuilderSign(_builder, _signer, inputStream.CreateStream(), outputStream.CreateStream());
-            c2pa.C2paReleaseManifestBuilder(_builder);
             if (ret != 0)
             {
                 Sdk.CheckError();
@@ -81,17 +82,14 @@ namespace C2pa
         public void SetManifestDefinition(ManifestDefinition manifest)
         {
             _definition = manifest;
-            if (_builder != null)
-            {
-                c2pa.C2paReleaseManifestBuilder(_builder);
-            }
-            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.ToJson());
+            RebuildBuilder();
         }
 
         public void SetFormat(string format)
         {
             _definition.Format = format;
-            // c2pa.C2paSetManifestBuilderFormat(_builder, format);
+            c2pa.C2paSetBuilderFormat(_builder, format);
+            Sdk.CheckError();
         }
 
         public void SetFormatFromFilename(string filename)
@@ -102,12 +100,22 @@ namespace C2pa
         public void SetTitle(string title)
         {
             _definition.Title = title;
+            RebuildBuilder();
+        }
+
+        public void SetThumbnail(Thumbnail thumbnail, string filepath)
+        {
+            _definition.Thumbnail = thumbnail;
+            using StreamAdapter dataStream = new(new FileStream(filepath, FileMode.Open));
+            c2pa.C2paSetBuilderThumbnail(_builder, thumbnail.Format, dataStream.CreateStream());
+            Sdk.CheckError();
         }
 
         public void AddAssertion(Assertion assertion)
         {
             _definition.Assertions.Add(assertion);
-            // c2pa.C2paAddBuilderAssertion(_builder, assertion.ToJson());
+            c2pa.C2paAddBuilderAssertion(_builder, assertion.Label, assertion.ToJson());
+            Sdk.CheckError();
         }
 
         public void AddIngredient(Ingredient ingredient, string filepath)
@@ -115,15 +123,16 @@ namespace C2pa
             _definition.Ingredients.Add(ingredient);
             using StreamAdapter dataStream = new(new FileStream(filepath, FileMode.Open));
             c2pa.C2paAddBuilderIngredient(_builder, JsonSerializer.Serialize(ingredient), ingredient.Format, dataStream.CreateStream());
+            Sdk.CheckError();
         }
 
-        public void AddResource(string identifier, string path)
-        {
-            _resources ??= new ResourceStore();
-            _resources.Resources.Add(identifier, path);
-            using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
-            c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
-        }
+        // public void AddResource(string identifier, string path)
+        // {
+        //     _resources ??= new ResourceStore();
+        //     _resources.Resources.Add(identifier, path);
+        //     using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
+        //     c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
+        // }
 
         public static string GenerateInstanceID()
         {
