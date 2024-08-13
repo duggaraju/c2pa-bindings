@@ -1,4 +1,4 @@
-use std::{io::Cursor, sync::RwLock};
+use std::{io::{Cursor, Seek}, sync::RwLock};
 
 use c2pa::{Builder, CAIRead, Signer, CAIReadWrite,};
 
@@ -56,15 +56,16 @@ impl ManifestBuilder {
         let format = self.builder.read().unwrap().definition.format.clone();
 
         let mut vec_source = Vec::new();
-        let mut vec_dest = Vec::new();
 
         input.read_to_end(&mut vec_source).map_err(C2paError::from)?;
-        output.read_to_end(&mut vec_dest).map_err(C2paError::from)?;
 
         let mut source = Cursor::new(vec_source);
-        let mut dest = Cursor::new(vec_dest);
+        let mut dest = Cursor::new(Vec::new());
 
         let result = self.builder.write().unwrap().sign(signer, &format, &mut source, &mut dest).map_err(C2paError::from)?;
+        dest.rewind()?;
+        
+        output.write_all(&dest.into_inner()).map_err(C2paError::from)?;
         Ok(result.to_vec())
     }
 }
