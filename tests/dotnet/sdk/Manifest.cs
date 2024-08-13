@@ -67,8 +67,11 @@ namespace C2pa
     public record ValidationStatus(string Code = "", string Url = "", string Explanation = "");
 
     public enum Relationship {
+        [JsonPropertyName("parentOf")]
         parentOf,
+        [JsonPropertyName("componentOf")]
         componentOf,
+        [JsonPropertyName("inputTo")]
         inputTo,
     }
 

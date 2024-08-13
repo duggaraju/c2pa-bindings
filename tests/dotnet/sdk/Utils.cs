@@ -13,7 +13,7 @@ namespace C2pa
             Converters =
             {
                 new AssertionTypeConverter(),
-                new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower)
+                new JsonStringEnumConverter()
             },
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
