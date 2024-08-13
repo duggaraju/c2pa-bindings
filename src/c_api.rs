@@ -504,6 +504,45 @@ pub unsafe extern "C" fn c2pa_add_builder_resource(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn c2pa_set_builder_format(
+    builder_ptr: *mut *mut ManifestBuilder,
+    format: *const c_char,
+) -> c_int{
+    let builder = Box::from_raw(*builder_ptr);
+    let format = from_c_str(format);
+    let result = builder.set_format(&format).map_err(C2paError::from);
+    
+    match result {
+        Ok(_) => 0,
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_set_builder_thumbnail(
+    builder_ptr: *mut *mut ManifestBuilder,
+    format: *const c_char,
+    stream: *mut C2paStream,
+) -> c_int {
+    let builder = Box::from_raw(*builder_ptr);
+    let mut source = StreamAdapter::from_stream_mut(&mut (*stream));
+
+    let format = from_c_str(format);
+    let result = builder.set_thumbnail(&format, &mut source).map_err(C2paError::from);
+
+    match result {
+        Ok(_) => 0,
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn c2pa_add_builder_ingredient(
     builder_ptr: *mut *mut ManifestBuilder,
     ingredient_json: *const c_char,
@@ -515,6 +554,26 @@ pub unsafe extern "C" fn c2pa_add_builder_ingredient(
     let ingredient_json = from_c_str(ingredient_json);
     let format = from_c_str(format);
     let result = builder.add_ingredient(&ingredient_json, &format, &mut source).map_err(C2paError::from);
+
+    match result {
+        Ok(_) => 0,
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_add_builder_assertion(
+    builder_ptr: *mut *mut ManifestBuilder,
+    label: *const c_char,
+    data: *const c_char,
+) -> c_int {
+    let builder = Box::from_raw(*builder_ptr);
+    let label = from_c_str(label);
+    let data = from_c_str(data);
+    let result = builder.add_assertion(&label, &data).map_err(C2paError::from);
 
     match result {
         Ok(_) => 0,

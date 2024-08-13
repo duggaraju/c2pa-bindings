@@ -11,6 +11,13 @@ pub struct ManifestBuilder {
 }
 
 impl ManifestBuilder {
+    
+    pub fn from_json( json: &str) -> Result<ManifestBuilder> {
+        let builder_result = c2pa::Builder::from_json(json).map_err(C2paError::from)?;
+        let locked_builder = RwLock::new(builder_result);
+        let builder = ManifestBuilder { builder: locked_builder };
+        Ok(builder)
+    }
 
     pub fn add_ingredient<T>(&self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
         
@@ -24,11 +31,19 @@ impl ManifestBuilder {
         Ok(self)
     }
 
-    pub fn from_json( json: &str) -> Result<ManifestBuilder> {
-        let builder_result = c2pa::Builder::from_json(json).map_err(C2paError::from)?;
-        let locked_builder = RwLock::new(builder_result);
-        let builder = ManifestBuilder { builder: locked_builder };
-        Ok(builder)
+    pub fn set_format(&self, format: &str) -> Result<&Self> {
+        let _ = self.builder.write().unwrap().set_format(format);
+        Ok(self)
+    }
+
+    pub fn set_thumbnail(&self, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> {
+        let _ = self.builder.write().unwrap().set_thumbnail(format, &mut stream);
+        Ok(self)
+    }
+
+    pub fn add_assertion(&self, label: &str, data: &str) -> Result<&Self> {
+        let _ = self.builder.write().unwrap().add_assertion_json(label, &data);
+        Ok(self)
     }
 
     pub fn sign_stream(&self, signer: &C2paSigner, input_mut: &dyn Stream, output_mut: &dyn Stream, ) -> Result<Vec<u8>> {
