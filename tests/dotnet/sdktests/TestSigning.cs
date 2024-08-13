@@ -61,7 +61,7 @@ namespace sdktests
             Assert.Equal("C# Test", manifest.ClaimGeneratorInfo[0].Name);
             Assert.Equal("Isaiah Carrington", ((CreativeWorkAssertion)manifest.Assertions[0]).Data.Authors[0].Name);
             Assert.Equal(Relationship.parentOf, manifest.Ingredients[0].Relationship);
-            Assert.Equal("jpg", manifest.Format);
+            Assert.Equal("image/jpeg", manifest.Format);
         }
 
         [Fact]

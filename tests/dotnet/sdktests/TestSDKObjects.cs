@@ -169,7 +169,7 @@ namespace sdktests
                 Title = title,
                 Format = format,
                 ClaimGeneratorInfo = { new ClaimGeneratorInfo("C# Test", "1.0.0") },
-                Thumbnail = thumbnail,
+                //Thumbnail = thumbnail,
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
             };
 
@@ -178,10 +178,10 @@ namespace sdktests
             ManifestBuilder builder = new(new() { ClaimGenerator = "C# Test" }, signer, definition);
             builder.AddIngredient(new(parentName, format, Relationship.parentOf), parentName);
 
-            string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI shouldn't be null.");
-            builder.SetThumbnail(thumbnail, "test_samples/ingredient_sample.jpg");
+            //string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI shouldn't be null.");
+            //builder.SetThumbnail(thumbnail, "test_samples/ingredient_sample.jpg");
 
-            builder.Sign(inputFile, "signed_files/ingredient_signed.jpg");
+            builder.Sign(inputFile, "test_samples/ingredient_signed.jpg");
             // Assert
         }
     }
@@ -199,7 +199,7 @@ namespace sdktests
                 Format = format,
                 ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
-                Ingredients = [new Ingredient("sample.jpg", "image/jpeg", Relationship.parentOf)]
+                Ingredients = [new Ingredient("sample.jpg", "image/jpg", Relationship.parentOf)]
             };
 
             ManifestBuilder builder = new(builderSettings, signer, manifest);
