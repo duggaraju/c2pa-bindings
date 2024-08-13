@@ -97,10 +97,10 @@ namespace sdktests
             CustomAssertion assertion1 = new("Custom Operation", new { name = "ByteDefender", source = "MicroHard" });
             builder1.AddAssertion(assertion1);
 
-            ManifestBuilder builder2 = new(ManifestBuilder.CreateBuilderSettings("Dotnet Multi Test"), signer);
+            ManifestBuilder builder2 = new(ManifestBuilder.CreateBuilderSettings("Dotnet Multi Test"), signer, new ManifestDefinition());
             builder2.SetTitle("Manifest 2");
             builder2.SetFormat("jpg");
-            builder2.AddClaimGeneratorInfo("Dotnet Multi Test", "1.0.0-alpha.1");
+            builder2.AddClaimGeneratorInfo(new() { Name = "Dotnet Multi Test", Version = "1.0.0-alpha.1" });
             builder2.AddAssertion(
                 new ActionAssertion(new()
                     {

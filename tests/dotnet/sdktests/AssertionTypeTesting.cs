@@ -192,7 +192,7 @@ namespace sdktests
             // Arrange
             TestUtils.KeyVaultSigner signer = new(_credentials);
 
-            ManifestBuilder builder = new(ManifestBuilder.CreateBuilderSettings("Testing Multi Assertions"), signer);
+            ManifestBuilder builder = new(ManifestBuilder.CreateBuilderSettings("Testing Multi Assertions"), signer, new ManifestDefinition());
             builder.SetTitle("Testing Multi Assertions");
             builder.SetFormat("jpg");
             builder.AddAssertion(new ActionAssertion(new() { Actions = { new C2paAction("Some Action", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), "Some Software Agent", "Some Changed", "u11245151") } }));

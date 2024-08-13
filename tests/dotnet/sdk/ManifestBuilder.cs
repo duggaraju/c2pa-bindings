@@ -12,7 +12,7 @@ namespace C2pa
         private C2pa.Bindings.ManifestBuilder? _builder;
         private readonly C2paSigner? _signer;
 
-        private ResourceStore? _resources;
+        // private ResourceStore? _resources;
 
         public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition)
         {
@@ -124,6 +124,12 @@ namespace C2pa
             using StreamAdapter dataStream = new(new FileStream(filepath, FileMode.Open));
             c2pa.C2paAddBuilderIngredient(_builder, JsonSerializer.Serialize(ingredient), ingredient.Format, dataStream.CreateStream());
             Sdk.CheckError();
+        }
+
+        public void AddClaimGeneratorInfo(ClaimGeneratorInfo claimGeneratorInfo)
+        {
+            _definition.ClaimGeneratorInfo.Add(claimGeneratorInfo);
+            RebuildBuilder();
         }
 
         // public void AddResource(string identifier, string path)

@@ -156,28 +156,30 @@ namespace sdktests
         {
             // Arrange
             string inputFile = "test_samples/ingredient_signing_sample.jpg";
-            string title = "pres_edited.jpg";
+            string title = "test_samples/pres_edited.jpg";
             string format = "image/jpeg";
-            string parentName = "ingredient_sample.jpg";
+            string parentName = "test_samples/ingredient_sample.jpg";
 
             ISignerCallback signer = new TestUtils.KeyVaultSigner(_credentials);
+
+            Thumbnail thumbnail = new(format, "manifest_thumbnail.jpg");
 
             ManifestDefinition definition = new()
             {
                 Title = title,
                 Format = format,
                 ClaimGeneratorInfo = { new ClaimGeneratorInfo("C# Test", "1.0.0") },
-                Thumbnail = new(format, "manifest_thumbnail.jpg"),
+                Thumbnail = thumbnail,
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
             };
 
 
             // Act
             ManifestBuilder builder = new(new() { ClaimGenerator = "C# Test" }, signer, definition);
-            builder.AddIngredient(new(parentName, format, Relationship.parentOf));
+            builder.AddIngredient(new(parentName, format, Relationship.parentOf), parentName);
 
-            string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI should be null.");
-            builder.AddResource(thumbURI, "test_samples/ingredient_sample.jpg");
+            string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI shouldn't be null.");
+            builder.SetThumbnail(thumbnail, "test_samples/ingredient_sample.jpg");
 
             builder.Sign(inputFile, "signed_files/ingredient_signed.jpg");
             // Assert
