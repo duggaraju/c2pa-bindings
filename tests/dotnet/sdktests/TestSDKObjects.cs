@@ -189,14 +189,14 @@ namespace sdktests
 
     public class TestUtils
     {
-        public static ManifestBuilder GetTestBuilder(ISignerCallback signer)
+        public static ManifestBuilder GetTestBuilder(ISignerCallback signer, string format)
         {
             ManifestBuilderSettings builderSettings = new() { ClaimGenerator = "C# Binding Test" };
 
             ManifestDefinition manifest = new()
             {
                 Title = "C# Test Image",
-                Format = "jpg",
+                Format = format,
                 ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
                 Ingredients = [new Ingredient("sample.jpg", "image/jpeg", Relationship.parentOf)]
@@ -213,7 +213,9 @@ namespace sdktests
                 return outputPath;
             }
 
-            ManifestBuilder builder = GetTestBuilder(signer);
+            string format = inputPath.Split(".").Last();
+
+            ManifestBuilder builder = GetTestBuilder(signer, format);
 
             // Act
             builder.Sign(inputPath, outputPath);
