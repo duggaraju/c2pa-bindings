@@ -9,7 +9,7 @@ namespace C2pa
         private ManifestDefinition _definition;
         private readonly ManifestBuilderSettings _settings;
         private readonly ISignerCallback _callback;
-        private readonly C2pa.Bindings.ManifestBuilder? _builder;
+        private C2pa.Bindings.ManifestBuilder? _builder;
         private readonly C2paSigner? _signer;
 
         private ResourceStore? _resources;
@@ -25,13 +25,8 @@ namespace C2pa
             _signer = c2pa.C2paCreateSigner(c, callback.Config.Config);
         }
 
-        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintion):
-            this(settings, callback, ManifestDefinition.FromJson(manifestDefintion))
-        {
-        }
-
-        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback) :
-            this(settings, callback, new ManifestDefinition())
+        public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, string manifestDefintionJsonString):
+            this(settings, callback, ManifestDefinition.FromJson(manifestDefintionJsonString))
         {
         }
 
@@ -86,26 +81,22 @@ namespace C2pa
         public void SetManifestDefinition(ManifestDefinition manifest)
         {
             _definition = manifest;
-        }
-
-        public void AddClaimGeneratorInfo(ClaimGeneratorInfo claimGeneratorInfo)
-        {
-            _definition.ClaimGeneratorInfo.Add(claimGeneratorInfo);
-        }
-
-        public void AddClaimGeneratorInfo(string name, string version)
-        {
-            _definition.ClaimGeneratorInfo.Add(new ClaimGeneratorInfo(name, version));
+            if (_builder != null)
+            {
+                c2pa.C2paReleaseManifestBuilder(_builder);
+            }
+            _builder = c2pa.C2paCreateManifestBuilder(_settings.Settings, _definition.ToJson());
         }
 
         public void SetFormat(string format)
         {
             _definition.Format = format;
+            // c2pa.C2paSetManifestBuilderFormat(_builder, format);
         }
 
         public void SetFormatFromFilename(string filename)
         {
-            _definition.Format = filename[(filename.LastIndexOf('.') + 1)..];
+            SetFormat(filename[(filename.LastIndexOf('.') + 1)..]);
         }
 
         public void SetTitle(string title)
@@ -116,11 +107,14 @@ namespace C2pa
         public void AddAssertion(Assertion assertion)
         {
             _definition.Assertions.Add(assertion);
+            // c2pa.C2paAddBuilderAssertion(_builder, assertion.ToJson());
         }
 
-        public void AddIngredient(Ingredient ingredient)
+        public void AddIngredient(Ingredient ingredient, string filepath)
         {
             _definition.Ingredients.Add(ingredient);
+            using StreamAdapter dataStream = new(new FileStream(filepath, FileMode.Open));
+            c2pa.C2paAddBuilderIngredient(_builder, JsonSerializer.Serialize(ingredient), ingredient.Format, dataStream.CreateStream());
         }
 
         public void AddResource(string identifier, string path)
