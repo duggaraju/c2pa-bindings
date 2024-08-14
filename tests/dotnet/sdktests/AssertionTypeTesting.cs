@@ -121,7 +121,7 @@ namespace sdktests
 
             string json = assertion.ToJson();
 
-            var result = Assertion.FromJson<CustomAssertion>(json);
+            var result = Assertion.FromJson<Assertion>(json);
 
             // Assert
 
@@ -145,7 +145,7 @@ namespace sdktests
             // Act
             string json = assertion.ToJson();
 
-            var result = Assertion.FromJson<CustomAssertion>(json);
+            var result = Assertion.FromJson<Assertion>(json);
 
             // Assert
 
