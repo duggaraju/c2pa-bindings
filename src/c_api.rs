@@ -495,7 +495,10 @@ pub unsafe extern "C" fn c2pa_add_builder_resource(
     let result = builder.add_resource(&id, &mut source).map_err(C2paError::from);
     
     match result {
-        Ok(_) => 0,
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
         Err(e) => {
             e.set_last();
             -1
@@ -513,7 +516,10 @@ pub unsafe extern "C" fn c2pa_set_builder_format(
     let result = builder.set_format(&format).map_err(C2paError::from);
     
     match result {
-        Ok(_) => 0,
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
         Err(e) => {
             e.set_last();
             -1
@@ -534,7 +540,10 @@ pub unsafe extern "C" fn c2pa_set_builder_thumbnail(
     let result = builder.set_thumbnail(&format, &mut source).map_err(C2paError::from);
 
     match result {
-        Ok(_) => 0,
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
         Err(e) => {
             e.set_last();
             -1
@@ -556,7 +565,10 @@ pub unsafe extern "C" fn c2pa_add_builder_ingredient(
     let result = builder.add_ingredient(&ingredient_json, &format, &mut source).map_err(C2paError::from);
 
     match result {
-        Ok(_) => 0,
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
         Err(e) => {
             e.set_last();
             -1
@@ -576,7 +588,10 @@ pub unsafe extern "C" fn c2pa_add_builder_assertion(
     let result = builder.add_assertion(&label, &data).map_err(C2paError::from);
 
     match result {
-        Ok(_) => 0,
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
         Err(e) => {
             e.set_last();
             -1
