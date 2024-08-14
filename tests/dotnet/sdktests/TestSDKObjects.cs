@@ -197,12 +197,13 @@ namespace sdktests
             {
                 Title = "C# Test Image",
                 Format = format,
-                ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
-                Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
-                Ingredients = [new Ingredient("sample.jpg", "image/jpg", Relationship.parentOf)]
             };
 
             ManifestBuilder builder = new(builderSettings, signer, manifest);
+            builder.AddClaimGeneratorInfo(new ClaimGeneratorInfo("C# Test", "1.0.0"));
+            builder.AddIngredient(new Ingredient("sample.jpg", "image/jpg", Relationship.parentOf), "test_samples/ingredient_sample.jpg" );
+            builder.AddAssertion(new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")])));
+
             return builder;
         }
 

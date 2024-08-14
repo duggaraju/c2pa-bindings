@@ -120,7 +120,6 @@ namespace C2pa
         public void AddAssertion(Assertion assertion)
         {
             _definition.Assertions.Add(assertion);
-            string dataJson = assertion.DataAsJson();
             c2pa.C2paAddBuilderAssertion(_builder, assertion.Label, assertion.DataAsJson());
             Sdk.CheckError();
         }
