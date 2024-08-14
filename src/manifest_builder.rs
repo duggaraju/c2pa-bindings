@@ -21,28 +21,28 @@ impl ManifestBuilder {
 
     pub fn add_ingredient<T>(&self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
         
-        let _ = self.builder.write().unwrap().add_ingredient(ingredient_json, format, &mut stream);
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.add_ingredient(ingredient_json, format, &mut stream);
         Ok(self)
     }
 
     pub fn add_resource(&self, resource_id: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> {
 
-        let _ = self.builder.write().unwrap().add_resource(&resource_id, &mut stream);
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.add_resource(&resource_id, &mut stream);
         Ok(self)
     }
 
     pub fn set_format(&self, format: &str) -> Result<&Self> {
-        let _ = self.builder.write().unwrap().set_format(format);
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.set_format(format);
         Ok(self)
     }
 
     pub fn set_thumbnail(&self, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> {
-        let _ = self.builder.write().unwrap().set_thumbnail(format, &mut stream);
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.set_thumbnail(format, &mut stream);
         Ok(self)
     }
 
     pub fn add_assertion(&self, label: &str, data: &str) -> Result<&Self> {
-        let _ = self.builder.write().unwrap().add_assertion_json(label, &data);
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.add_assertion_json(label, &data);
         Ok(self)
     }
 
@@ -62,7 +62,7 @@ impl ManifestBuilder {
         let mut source = Cursor::new(vec_source);
         let mut dest = Cursor::new(Vec::new());
 
-        let result = self.builder.write().unwrap().sign(signer, &format, &mut source, &mut dest).map_err(C2paError::from)?;
+        let result = self.builder.write().map_err(|_|C2paError::RwLock)?.sign(signer, &format, &mut source, &mut dest).map_err(C2paError::from)?;
         dest.rewind()?;
         
         output.write_all(&dest.into_inner()).map_err(C2paError::from)?;
