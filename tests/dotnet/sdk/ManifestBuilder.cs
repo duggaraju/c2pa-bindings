@@ -79,6 +79,12 @@ namespace C2pa
             return _definition;
         }
 
+        public unsafe string GetBuilderDefinition()
+        {
+            string defintion = Utils.FromCString(c2pa.C2paGetBuilderDefinition(_builder));
+            return defintion;
+        }
+
         public void SetManifestDefinition(ManifestDefinition manifest)
         {
             _definition = manifest;
@@ -114,7 +120,8 @@ namespace C2pa
         public void AddAssertion(Assertion assertion)
         {
             _definition.Assertions.Add(assertion);
-            c2pa.C2paAddBuilderAssertion(_builder, assertion.Label, assertion.ToJson());
+            string dataJson = assertion.DataAsJson();
+            c2pa.C2paAddBuilderAssertion(_builder, assertion.Label, assertion.DataAsJson());
             Sdk.CheckError();
         }
 

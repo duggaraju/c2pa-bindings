@@ -6,6 +6,8 @@ use crate::{
     Result, C2paError, C2paSigner, StreamAdapter, Stream
 };
 
+use serde_json;
+
 pub struct ManifestBuilder {
     pub builder: RwLock<Builder>
 }
@@ -17,6 +19,12 @@ impl ManifestBuilder {
         let locked_builder = RwLock::new(builder_result);
         let builder = ManifestBuilder { builder: locked_builder };
         Ok(builder)
+    }
+
+    pub fn get_definition(&self) -> Result<String> {
+        let definition = &self.builder.read().map_err(|_|C2paError::RwLock)?.definition;
+        let defintion_string = serde_json::to_string(&definition).expect("{}");
+        Ok(defintion_string)
     }
 
     pub fn add_ingredient<T>(&self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
@@ -42,7 +50,8 @@ impl ManifestBuilder {
     }
 
     pub fn add_assertion(&self, label: &str, data: &str) -> Result<&Self> {
-        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.add_assertion_json(label, &data);
+        let data_json: serde_json::Value = serde_json::from_str(data).expect("{}");
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.add_assertion(label, &data_json);
         Ok(self)
     }
 
