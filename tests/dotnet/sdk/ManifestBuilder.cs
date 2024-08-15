@@ -3,6 +3,20 @@ using System.Text.Json;
 
 namespace C2pa
 {
+
+    public class ManifestBuilderSettings
+    {
+        public string ClaimGenerator { get; set; } = string.Empty;
+
+        public string TrustSettings { get; set; } = "{}";
+
+        public ManifestBuilderSettingsC Settings => new ManifestBuilderSettingsC
+        {
+            ClaimGenerator = ClaimGenerator,
+            Settings = TrustSettings
+        };
+    }
+
     public class ManifestBuilder
     {
 

@@ -55,31 +55,6 @@ namespace C2pa
         }
     }
 
-    public class ManifestDefinition(string format = "application/octet-stream")
-    {
-        public string? Vendor { get; set; } = null;
-        public List<ClaimGeneratorInfo> ClaimGeneratorInfo { get; set; } = [];
-        public string? Title { get; set; } = null;
-        public string Format { get; set; } = format;
-        public string InstanceID { get; set; } = ManifestBuilder.GenerateInstanceID();
-        public Thumbnail? Thumbnail { get; set; } = null;
-        public List<Ingredient> Ingredients { get; set; } = [];
-        public List<Assertion> Assertions { get; set; } = [];
-        public List<string>? Redactions { get; set; } = null;
-        public string? Label { get; set; } = null;
-
-        public string ToJson()
-        {
-            return JsonSerializer.Serialize(this, Utils.JsonOptions);
-        }
-
-        public static ManifestDefinition FromJson(string json)
-        {
-            var value = JsonSerializer.Deserialize<ManifestDefinition>(json, Utils.JsonOptions);
-            return value ?? throw new JsonException("Invalid JSON");
-        }
-    }
-
     public interface ISignerCallback
     {
         int Sign(ReadOnlySpan<byte> data, Span<byte> hash);
@@ -103,54 +78,6 @@ namespace C2pa
             TimeAuthorityUrl = TimeAuthorityUrl,
             UseOcsp = UseOcsp
         };
-    }
-
-    public class ManifestBuilderSettings
-    {
-        public string ClaimGenerator { get; set; } = string.Empty;
-
-        public string TrustSettings { get; set; } = "{}";
-
-        public ManifestBuilderSettingsC Settings => new ManifestBuilderSettingsC
-        {
-            ClaimGenerator = ClaimGenerator,
-            Settings = TrustSettings
-        };
-    }
-
-    public class ManifestStoreReader
-    {
-        public unsafe string? ReadJsonFromFile(string path)
-        {
-            if (!Utils.FilePathValid(path))
-            {
-                throw new ArgumentException("Invalid file path provided.", nameof(path));
-            }
-            using var adapter = new StreamAdapter(new FileStream(path, FileMode.Open));
-            var c2paStream = adapter.CreateStream();
-            try
-            {
-                var manifest = c2pa.C2paVerifyStream(c2paStream);
-                Sdk.CheckError();
-                var json = Utils.FromCString(manifest);
-                Console.WriteLine("Manifest: {0}", json);
-                return json;
-            }
-            finally
-            {
-                c2pa.C2paReleaseStream(c2paStream);
-            }
-        }
-
-        public unsafe ManifestStore? ReadFromFile(string path)
-        {
-            var json = ReadJsonFromFile(path);
-            if (string.IsNullOrEmpty(json))
-            {
-                return null;
-            }
-            return ManifestStore.FromJson(json);
-        }
     }
 
     /// <summary>
