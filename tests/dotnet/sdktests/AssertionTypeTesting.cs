@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Azure.Core;
+﻿using Azure.Core;
 using C2pa;
 
 namespace sdktests
