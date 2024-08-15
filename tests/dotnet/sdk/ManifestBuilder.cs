@@ -126,11 +126,11 @@ namespace C2pa
             Sdk.CheckError();
         }
 
-        public void AddIngredient(Ingredient ingredient, string filepath)
+        public void AddIngredient(Ingredient ingredient)
         {
             _definition.Ingredients.Add(ingredient);
-            using StreamAdapter dataStream = new(new FileStream(filepath, FileMode.Open));
-            c2pa.C2paAddBuilderIngredient(_builder, JsonSerializer.Serialize(ingredient), ingredient.Format, dataStream.CreateStream());
+            using StreamAdapter dataStream = new(new FileStream(ingredient.Title, FileMode.Open));
+            c2pa.C2paAddBuilderIngredient(_builder, JsonSerializer.Serialize(ingredient, Utils.JsonOptions), ingredient.Format, dataStream.CreateStream());
             Sdk.CheckError();
         }
 

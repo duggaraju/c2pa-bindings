@@ -156,32 +156,32 @@ namespace sdktests
         {
             // Arrange
             string inputFile = "test_samples/ingredient_signing_sample.jpg";
-            string title = "test_samples/pres_edited.jpg";
+            string outputFile = "test_samples/ingredient_signed.jpg";
+
+            string title = "Testing Ingredient Signing";
             string format = "image/jpeg";
             string parentName = "test_samples/ingredient_sample.jpg";
 
-            ISignerCallback signer = new TestUtils.KeyVaultSigner(_credentials);
+            if (File.Exists(outputFile))
+            {
+                File.Delete(outputFile);
+            }
 
-            Thumbnail thumbnail = new(format, "manifest_thumbnail.jpg");
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(_credentials);
 
             ManifestDefinition definition = new()
             {
                 Title = title,
                 Format = format,
                 ClaimGeneratorInfo = { new ClaimGeneratorInfo("C# Test", "1.0.0") },
-                //Thumbnail = thumbnail,
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
             };
 
-
             // Act
             ManifestBuilder builder = new(new() { ClaimGenerator = "C# Test" }, signer, definition);
-            builder.AddIngredient(new(parentName, format, Relationship.parentOf), parentName);
+            builder.AddIngredient(new(parentName, format, Relationship.parentOf));
 
-            //string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI shouldn't be null.");
-            //builder.SetThumbnail(thumbnail, "test_samples/ingredient_sample.jpg");
-
-            builder.Sign(inputFile, "test_samples/ingredient_signed.jpg");
+            builder.Sign(inputFile, outputFile);
             // Assert
         }
     }
@@ -201,7 +201,7 @@ namespace sdktests
 
             ManifestBuilder builder = new(builderSettings, signer, manifest);
             builder.AddClaimGeneratorInfo(new ClaimGeneratorInfo("C# Test", "1.0.0"));
-            builder.AddIngredient(new Ingredient("sample.jpg", "image/jpg", Relationship.parentOf), "test_samples/ingredient_sample.jpg" );
+            builder.AddIngredient(new Ingredient("test_samples/ingredient_sample.jpg", "image/jpg", Relationship.parentOf));
             builder.AddAssertion(new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")])));
 
             return builder;
