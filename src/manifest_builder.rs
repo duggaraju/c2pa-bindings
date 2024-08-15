@@ -27,6 +27,11 @@ impl ManifestBuilder {
         Ok(defintion_string)
     }
 
+    pub fn get_thumbnail_url(&self) -> Result<Option<String>> {
+        let thumbnail_url = self.builder.read().map_err(|_|C2paError::RwLock)?.definition.thumbnail.as_ref().map(|t| t.identifier.clone());
+        Ok(thumbnail_url)
+    }
+
     pub fn add_ingredient<T>(&self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
         
         let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.add_ingredient(ingredient_json, format, &mut stream);

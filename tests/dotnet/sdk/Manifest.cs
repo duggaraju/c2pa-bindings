@@ -104,6 +104,8 @@ namespace C2pa
         
         public string? Title { get; set; } = null;
 
+        public Thumbnail? Thumbnail { get; set; } = null;
+
         public List<Ingredient> Ingredients { get; set; } = [];
 
         public List<Assertion> Assertions { get; set; } = [];

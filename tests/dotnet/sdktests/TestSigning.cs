@@ -64,6 +64,52 @@ namespace sdktests
             Assert.Equal("image/jpeg", manifest.Format);
         }
 
+        [Fact]
+        public void TestCustomThumbnailAddedToFileCorrectly()
+        {
+            // Arrange
+            string inputPath = "test_samples/result_sample.jpg";
+            string thumbnailPath = "test_samples/thumbnail.jpg";
+
+            string outputPath = "test_samples/custom_thumbnail_signed.jpg";
+
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
+
+            ISignerCallback signer = new TestUtils.KeyVaultSigner(new DefaultAzureCredential(true));
+
+            ManifestDefinition manifestDefinition = new()
+            {
+                ClaimGeneratorInfo = new()
+                {
+                    new("Dotnet Test", "1.0.0-alpha.1")
+                },
+                Title = "Thumbnail Test",
+                Format = "jpg"
+            };
+
+            // Act
+            ManifestBuilder builder = new(new() { ClaimGenerator = "Testing Thumbnails"} ,signer, manifestDefinition);
+            builder.SetThumbnail(new Thumbnail("image/jpeg", thumbnailPath));
+
+            builder.Sign(inputPath, outputPath);
+
+            if (!File.Exists(outputPath)) throw new IOException("Output path was not created.");
+
+            ManifestStoreReader reader = new();
+            ManifestStore? store = reader.ReadFromFile(outputPath);
+
+            Assert.NotNull(store);
+
+            Manifest manifest = store.Manifests[store.ActiveManifest];
+
+            // Assert
+            Assert.Equal("self#jumbf=c2pa.assertions/c2pa.thumbnail.claim.jpeg", manifest.Thumbnail?.Identifier);
+            Assert.Equal("image/jpeg", manifest.Format);
+        }
+
         // Fix Consecutive signing. Currently replaces previous manifest
         /*[Fact]
         public void TestMultipleManifestsAddedToFileAndDeserializedCorrectly()

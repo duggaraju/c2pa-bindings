@@ -12,7 +12,7 @@ namespace C2pa
         private C2pa.Bindings.ManifestBuilder? _builder;
         private readonly C2paSigner? _signer;
 
-        // private ResourceStore? _resources;
+        private ResourceStore? _resources;
 
         public unsafe ManifestBuilder(ManifestBuilderSettings settings, ISignerCallback callback, ManifestDefinition definition)
         {
@@ -109,12 +109,14 @@ namespace C2pa
             RebuildBuilder();
         }
 
-        public void SetThumbnail(Thumbnail thumbnail, string filepath)
+        public void SetThumbnail(Thumbnail thumbnail)
         {
             _definition.Thumbnail = thumbnail;
-            using StreamAdapter dataStream = new(new FileStream(filepath, FileMode.Open));
+            using StreamAdapter dataStream = new(new FileStream(thumbnail.Identifier, FileMode.Open));
             c2pa.C2paSetBuilderThumbnail(_builder, thumbnail.Format, dataStream.CreateStream());
+            dataStream.Dispose();
             Sdk.CheckError();
+            AddResource(GetBuilderThumbnailUri(), thumbnail.Identifier);
         }
 
         public void AddAssertion(Assertion assertion)
@@ -138,13 +140,17 @@ namespace C2pa
             RebuildBuilder();
         }
 
-        // public void AddResource(string identifier, string path)
-        // {
-        //     _resources ??= new ResourceStore();
-        //     _resources.Resources.Add(identifier, path);
-        //     using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
-        //     c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
-        // }
+        public unsafe string GetBuilderThumbnailUri(){
+            return Utils.FromCString(c2pa.C2paGetBuilderThumbnailUrl(_builder));
+        }
+
+        public void AddResource(string identifier, string path)
+        {
+            _resources ??= new ResourceStore();
+            _resources.Resources.Add(identifier, path);
+            using StreamAdapter resourceStream = new(new FileStream(path, FileMode.Open));
+            c2pa.C2paAddBuilderResource(_builder, identifier, resourceStream.CreateStream());
+        }
 
         public static string GenerateInstanceID()
         {

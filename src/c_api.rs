@@ -482,6 +482,23 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn c2pa_get_builder_thumbnail_url(
+    builder_ptr: *mut *mut ManifestBuilder,
+) -> *mut c_char {
+    let builder = Box::from_raw(*builder_ptr);
+    let result = builder.get_thumbnail_url().map_err(C2paError::from);
+    *builder_ptr = Box::into_raw(builder);
+
+    match result {
+        Ok(url) => to_c_string(url.unwrap_or_default()),
+        Err(e) => {
+            e.set_last();
+            std::ptr::null_mut()
+        }
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn c2pa_add_builder_resource(
     builder_ptr: *mut *mut ManifestBuilder,
     id: *const c_char,
