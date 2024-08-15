@@ -1,0 +1,34 @@
+{
+    "claim_generator_info": [
+      {
+        "name": "C# Test",
+        "version": "1.0.0"
+      }
+    ],
+    "title": "C# Test Image",
+    "format": "jpg",
+    "instance_id": "xmp:iid:f44ed45a-12b4-496c-9322-5ff1db23bf3f",
+    "ingredients": [
+      {
+        "title": "sample.jpg",
+        "format": "image/jpeg",
+        "relationship": "parentOf"
+      }
+    ],
+    "assertions": [
+      {
+        "data": {
+          "@context": "http://schema.org",
+          "@type": "CreativeWork",
+          "authors": [
+            {
+              "@type": "Person",
+              "name": "Isaiah Carrington"
+            }
+          ]
+        },
+        "label": "stds.schema-org.CreativeWork",
+        "kind": "Json"
+      }
+    ]
+}

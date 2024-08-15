@@ -19,6 +19,8 @@ namespace C2pa
             string? label = root.GetProperty("label").GetString() ?? throw new JsonException();
             Type assertionType = GetAssertionTypeFromLabel(label);
 
+            string rawJson = root.GetRawText();
+
             return JsonSerializer.Deserialize(root.GetRawText(), assertionType, options) as Assertion;
         }
 
@@ -42,6 +44,10 @@ namespace C2pa
         public string ToJson()
         {
             return JsonSerializer.Serialize(this, Utils.JsonOptions);
+        }
+
+        public string DataAsJson(){
+            return JsonSerializer.Serialize(Data, Utils.JsonOptions);
         }
 
         public static T? FromJson<T>(string json) where T : Assertion
@@ -81,13 +87,13 @@ namespace C2pa
     }
 
 
-    public class C2paAction(string action = "", string when = "", string softwareAgent = "", string changed = "", string instanceID = "", List<dynamic>? actors = null) : AssertionData
+    public class C2paAction(string? action = null, string? when = null, string? softwareAgent = null, string? changed = null, string? instanceID = null, List<dynamic>? actors = null) : AssertionData
     {
-        public string Action { get; set; } = action;
-        public string When { get; set; } = when;
-        public string SoftwareAgent { get; set; } = softwareAgent;
-        public string Changed { get; set; } = changed;
-        public string InstanceID { get; set; } = instanceID;
+        public string? Action { get; set; } = action;
+        public string? When { get; set; } = when;
+        public string? SoftwareAgent { get; set; } = softwareAgent;
+        public string? Changed { get; set; } = changed;
+        public string? InstanceID { get; set; } = instanceID;
         public List<dynamic> Actors { get; set; } = actors ?? [];
     }
 

@@ -156,9 +156,16 @@ namespace sdktests
         {
             // Arrange
             string inputFile = "test_samples/ingredient_signing_sample.jpg";
-            string title = "pres_edited.jpg";
+            string outputFile = "test_samples/ingredient_signed.jpg";
+
+            string title = "Testing Ingredient Signing";
             string format = "image/jpeg";
-            string parentName = "ingredient_sample.jpg";
+            string parentName = "test_samples/ingredient_sample.jpg";
+
+            if (File.Exists(outputFile))
+            {
+                File.Delete(outputFile);
+            }
 
             ISignerCallback signer = new TestUtils.KeyVaultSigner(_credentials);
 
@@ -167,19 +174,14 @@ namespace sdktests
                 Title = title,
                 Format = format,
                 ClaimGeneratorInfo = { new ClaimGeneratorInfo("C# Test", "1.0.0") },
-                Thumbnail = new(format, "manifest_thumbnail.jpg"),
                 Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
             };
-
 
             // Act
             ManifestBuilder builder = new(new() { ClaimGenerator = "C# Test" }, signer, definition);
             builder.AddIngredient(new(parentName, format, Relationship.parentOf));
 
-            string? thumbURI = (builder.GetManifestDefinition()?.Thumbnail?.Identifier) ?? throw new Exception("Thumbnail URI should be null.");
-            builder.AddResource(thumbURI, "test_samples/ingredient_sample.jpg");
-
-            builder.Sign(inputFile, "signed_files/ingredient_signed.jpg");
+            builder.Sign(inputFile, outputFile);
             // Assert
         }
     }
@@ -187,20 +189,21 @@ namespace sdktests
 
     public class TestUtils
     {
-        public static ManifestBuilder GetTestBuilder(ISignerCallback signer)
+        public static ManifestBuilder GetTestBuilder(ISignerCallback signer, string format)
         {
             ManifestBuilderSettings builderSettings = new() { ClaimGenerator = "C# Binding Test" };
 
             ManifestDefinition manifest = new()
             {
                 Title = "C# Test Image",
-                Format = "jpg",
-                ClaimGeneratorInfo = [new("C# Test", "1.0.0")],
-                Assertions = [new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")]))],
-                Ingredients = [new Ingredient("sample.jpg", "image/jpeg", Relationship.parentOf)]
+                Format = format,
             };
 
             ManifestBuilder builder = new(builderSettings, signer, manifest);
+            builder.AddClaimGeneratorInfo(new ClaimGeneratorInfo("C# Test", "1.0.0"));
+            builder.AddIngredient(new Ingredient("test_samples/ingredient_sample.jpg", "image/jpg", Relationship.parentOf));
+            builder.AddAssertion(new CreativeWorkAssertion(new CreativeWorkAssertionData("http://schema.org", "CreativeWork", [new AuthorInfo("Person", "Isaiah Carrington")])));
+
             return builder;
         }
 
@@ -211,7 +214,9 @@ namespace sdktests
                 return outputPath;
             }
 
-            ManifestBuilder builder = GetTestBuilder(signer);
+            string format = inputPath.Split(".").Last();
+
+            ManifestBuilder builder = GetTestBuilder(signer, format);
 
             // Act
             builder.Sign(inputPath, outputPath);

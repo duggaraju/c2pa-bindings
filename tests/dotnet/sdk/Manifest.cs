@@ -67,8 +67,11 @@ namespace C2pa
     public record ValidationStatus(string Code = "", string Url = "", string Explanation = "");
 
     public enum Relationship {
+        [JsonPropertyName("parentOf")]
         parentOf,
+        [JsonPropertyName("componentOf")]
         componentOf,
+        [JsonPropertyName("inputTo")]
         inputTo,
     }
 
@@ -100,6 +103,8 @@ namespace C2pa
         public string Format { get; set; } = format;
         
         public string? Title { get; set; } = null;
+
+        public Thumbnail? Thumbnail { get; set; } = null;
 
         public List<Ingredient> Ingredients { get; set; } = [];
 

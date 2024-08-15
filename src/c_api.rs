@@ -11,12 +11,16 @@
 // specific language governing permissions and limitations under
 // each license.
 
-use std::{ffi::{c_char, c_int, c_long, CStr, CString}, io::{self, Read}};
+use std::ffi::{c_char, c_int, c_long, CStr, CString};
 use std::result::Result::Ok;
+use c2pa::settings::load_settings_from_str;
+use serde_json::json;
+
 // use uniffi::deps::anyhow::Ok;
 
+use crate::manifest_builder::ManifestBuilder;
 use crate::{
-    C2paError, C2paSigner, ManifestBuilder, ManifestBuilderSettings, ManifestStoreReader, SeekMode,
+    C2paError, C2paSigner, ManifestStoreReader, SeekMode,
     SignerConfig, StreamAdapter, StreamError, StreamResult,
 };
 
@@ -450,14 +454,43 @@ pub unsafe extern "C" fn c2pa_create_manifest_builder(
     settings: &ManifestBuilderSettingsC,
     json: *const c_char,
 ) -> *mut ManifestBuilder {
-    let json = from_c_str(json);
-    let settings = ManifestBuilderSettings {
-        generator: from_c_str(settings.claim_generator),
-        settings: from_c_str(settings.settings),
-    };
-    let builder = ManifestBuilder::new(&settings);
-    match builder.from_json(&json) {
-        Ok(_) => Box::into_raw(Box::new(builder)),
+    let definition = from_c_str(json);
+
+    let settings = json!({
+        "claim_generator": from_c_str(settings.claim_generator),
+        "settings": from_c_str(settings.settings),
+    }).to_string();
+
+    let result = load_settings_from_str(&settings, "json").map_err(C2paError::from);
+
+    if let Err(e) = result {
+        e.set_last();
+        return std::ptr::null_mut();
+    }
+    
+    let builder = ManifestBuilder::from_json(&definition);
+
+    match builder{
+        Ok(builder) => {
+            Box::into_raw(Box::new(builder))
+        },
+        Err(e) => {
+            e.set_last();
+            std::ptr::null_mut()
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_get_builder_thumbnail_url(
+    builder_ptr: *mut *mut ManifestBuilder,
+) -> *mut c_char {
+    let builder = Box::from_raw(*builder_ptr);
+    let result = builder.get_thumbnail_url().map_err(C2paError::from);
+    *builder_ptr = Box::into_raw(builder);
+
+    match result {
+        Ok(url) => to_c_string(url.unwrap_or_default()),
         Err(e) => {
             e.set_last();
             std::ptr::null_mut()
@@ -471,22 +504,131 @@ pub unsafe extern "C" fn c2pa_add_builder_resource(
     id: *const c_char,
     stream: *mut C2paStream,
 ) -> c_int{
-    let mut builder = Box::from_raw(*builder_ptr);
+    let builder = Box::from_raw(*builder_ptr);
 
-    let mut stream_ref = StreamAdapter::from_stream_mut(&mut (*stream));
-
-    let mut buf: Vec<u8> = Vec::new();
-    let res: Result<usize, io::Error> = stream_ref.read_to_end(&mut buf);
-    let _size = res.unwrap();
+    let mut source = StreamAdapter::from_stream_mut(&mut (*stream));
     
     let id = from_c_str(id);
-    let result = builder.add_resource(&id, &buf);
+    let result = builder.add_resource(&id, &mut source).map_err(C2paError::from);
     
     match result {
-        Ok(_) => 0,
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
         Err(e) => {
             e.set_last();
             -1
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_set_builder_format(
+    builder_ptr: *mut *mut ManifestBuilder,
+    format: *const c_char,
+) -> c_int{
+    let builder = Box::from_raw(*builder_ptr);
+    let format = from_c_str(format);
+    let result = builder.set_format(&format).map_err(C2paError::from);
+    
+    match result {
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_set_builder_thumbnail(
+    builder_ptr: *mut *mut ManifestBuilder,
+    format: *const c_char,
+    stream: *mut C2paStream,
+) -> c_int {
+    let builder = Box::from_raw(*builder_ptr);
+    let mut source = StreamAdapter::from_stream_mut(&mut (*stream));
+
+    let format = from_c_str(format);
+    let result = builder.set_thumbnail(&format, &mut source).map_err(C2paError::from);
+
+    match result {
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_add_builder_ingredient(
+    builder_ptr: *mut *mut ManifestBuilder,
+    ingredient_json: *const c_char,
+    format: *const c_char,
+    stream: *mut C2paStream,
+) -> c_int {
+    let builder = Box::from_raw(*builder_ptr);
+    let mut source = StreamAdapter::from_stream_mut(&mut (*stream));
+    let ingredient_json = from_c_str(ingredient_json);
+    let format = from_c_str(format);
+    let result = builder.add_ingredient(&ingredient_json, &format, &mut source).map_err(C2paError::from);
+
+    match result {
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_add_builder_assertion(
+    builder_ptr: *mut *mut ManifestBuilder,
+    label: *const c_char,
+    data: *const c_char,
+) -> c_int {
+    let builder = Box::from_raw(*builder_ptr);
+    let label = from_c_str(label);
+    let data = from_c_str(data);
+    let result = builder.add_assertion(&label, &data).map_err(C2paError::from);
+
+    match result {
+        Ok(_) => {
+            *builder_ptr = Box::into_raw(builder);
+            0
+        }
+        Err(e) => {
+            e.set_last();
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_get_builder_definition(
+    builder_ptr: *mut *mut ManifestBuilder,
+) -> *mut c_char {
+    let builder = Box::from_raw(*builder_ptr);
+    let result = builder.get_definition().map_err(C2paError::from);
+    *builder_ptr = Box::into_raw(builder);
+
+    match result {
+        Ok(json) => to_c_string(json),
+        Err(e) => {
+            e.set_last();
+            std::ptr::null_mut()
         }
     }
 }
@@ -506,11 +648,14 @@ pub unsafe extern "C" fn c2pa_manifest_builder_sign(
     input: *mut C2paStream,
     output: *mut C2paStream,
 ) -> c_int {
+
     let builder = Box::from_raw(*builder_ptr);
     let mut input_ref = StreamAdapter::from_stream_mut(&mut (*input));
     let mut output_ref = StreamAdapter::from_stream_mut(&mut (*output));
-    let result = builder.sign(&(*signer), &mut input_ref, &mut output_ref);
+    let result = builder.sign(&(*signer), &mut input_ref, &mut output_ref).map_err(C2paError::from);
+
     *builder_ptr = Box::into_raw(builder);
+
     match result {
         std::result::Result::Ok(_) => 0,
         Err(e) => {

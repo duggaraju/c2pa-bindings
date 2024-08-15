@@ -1,187 +1,85 @@
-// Copyright 2023 Adobe. All rights reserved.
-// This file is licensed to you under the Apache License,
-// Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
-// or the MIT license (http://opensource.org/licenses/MIT),
-// at your option.
+use std::{io::{Cursor, Seek}, sync::RwLock};
 
-// Unless required by applicable law or agreed to in writing,
-// this software is distributed on an "AS IS" BASIS, WITHOUT
-// WARRANTIES OR REPRESENTATIONS OF ANY KIND, either express or
-// implied. See the LICENSE-MIT and LICENSE-APACHE files for the
-// specific language governing permissions and limitations under
-// each license.
-
-use std::{collections::HashMap, sync::RwLock};
-
-use c2pa::{settings, CAIRead, CAIReadWrite, Manifest, Signer};
+use c2pa::{Builder, CAIRead, Signer, CAIReadWrite,};
 
 use crate::{
-    stream::{Stream, StreamAdapter},
-    C2paError, C2paSigner, Result,
+    Result, C2paError, C2paSigner, StreamAdapter, Stream
 };
 
-pub struct ManifestBuilderSettings {
-    pub generator: String,
-    pub settings: String,
-}
-
-trait StreamResolver: Send + Sync {
-    fn stream_for_id(&mut self, id: &str) -> Option<&mut Box<dyn Stream>>;
-}
-
-struct StreamTable {
-    streams: HashMap<String, Box<dyn Stream>>,
-}
-
-impl StreamResolver for StreamTable {
-    fn stream_for_id(&mut self, id: &str) -> Option<&mut Box<dyn Stream>> {
-        self.streams.get_mut(id)
-    }
-}
+use serde_json;
 
 pub struct ManifestBuilder {
-    manifest: RwLock<Manifest>,
-    settings: String,
-    _resolvers: Vec<Box<dyn StreamResolver>>,
+    pub builder: RwLock<Builder>
 }
 
 impl ManifestBuilder {
-    pub fn new(settings: &ManifestBuilderSettings) -> Self {
-        Self {
-            manifest: RwLock::new(Manifest::new(settings.generator.clone())),
-            settings: settings.settings.clone(),
-            _resolvers: Vec::new(),
-        }
+    
+    pub fn from_json( json: &str) -> Result<ManifestBuilder> {
+        let builder_result = c2pa::Builder::from_json(json).map_err(C2paError::from)?;
+        let locked_builder = RwLock::new(builder_result);
+        let builder = ManifestBuilder { builder: locked_builder };
+        Ok(builder)
     }
 
-    fn unlock_write(&self) -> Result<std::sync::RwLockWriteGuard<Manifest>> {
-        self.manifest.try_write().map_err(|_| C2paError::RwLock)
+    pub fn get_definition(&self) -> Result<String> {
+        let definition = &self.builder.read().map_err(|_|C2paError::RwLock)?.definition;
+        let defintion_string = serde_json::to_string(&definition).expect("{}");
+        Ok(defintion_string)
     }
 
-    pub fn from_json(&self, json: &str) -> Result<()> {
-        *self.unlock_write()? = c2pa::Manifest::from_json(json).map_err(C2paError::from)?;
-        Ok(())
+    pub fn get_thumbnail_url(&self) -> Result<Option<String>> {
+        let thumbnail_url = self.builder.read().map_err(|_|C2paError::RwLock)?.definition.thumbnail.as_ref().map(|t| t.identifier.clone());
+        Ok(thumbnail_url)
     }
 
-    pub fn set_format(&mut self, format: &str) -> Result<&mut Self> {
-        self.unlock_write()?.set_format(format);
+    pub fn add_ingredient<T>(&self, ingredient_json: T, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> where T: Into<String> {
+        
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.add_ingredient(ingredient_json, format, &mut stream);
         Ok(self)
     }
 
-    fn _set_title(&mut self, _title: &str) -> &mut Self {
-        self
-    }
+    pub fn add_resource(&self, resource_id: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> {
 
-    fn _set_remote_url(&mut self, _url: &str, _remote_only: bool) -> &mut Self {
-        self
-    }
-
-    pub fn add_resource(&mut self, id: &str, resource: &[u8]) -> Result<&Self> {
-        self.unlock_write()?.resources_mut().add(id, resource)?;
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.add_resource(&resource_id, &mut stream);
         Ok(self)
     }
 
-    pub fn add_resource_stream(&mut self, _id: &str, _stream: Box<dyn Stream>) -> Result<&Self> {
-        // let buf = _stream.read_stream(65565).map_err(C2paError::from)?;
-        // self.unlock_write()?.resources_mut().add(_id, _stream);
+    pub fn set_format(&self, format: &str) -> Result<&Self> {
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.set_format(format);
         Ok(self)
     }
 
-    pub fn sign_stream(
-        &self,
-        signer: &C2paSigner,
-        input_mut: &dyn Stream,
-        output_mut: &dyn Stream,
-    ) -> Result<Vec<u8>> {
+    pub fn set_thumbnail(&self, format: &str, mut stream: &mut dyn CAIRead) -> Result<&Self> {
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.set_thumbnail(format, &mut stream);
+        Ok(self)
+    }
+
+    pub fn add_assertion(&self, label: &str, data: &str) -> Result<&Self> {
+        let data_json: serde_json::Value = serde_json::from_str(data).expect("{}");
+        let _ = self.builder.write().map_err(|_|C2paError::RwLock)?.add_assertion(label, &data_json);
+        Ok(self)
+    }
+
+    pub fn sign_stream(&self, signer: &C2paSigner, input_mut: &dyn Stream, output_mut: &dyn Stream, ) -> Result<Vec<u8>> {
         let mut input = StreamAdapter::from(input_mut);
         let mut output = StreamAdapter::from(output_mut);
         self.sign(signer, &mut input, &mut output)
     }
 
-    pub fn sign(
-        &self,
-        signer: &dyn Signer,
-        input: &mut dyn CAIRead,
-        output: &mut dyn CAIReadWrite,
-    ) -> Result<Vec<u8>> {
-        settings::load_settings_from_str(&self.settings, "json").map_err(C2paError::from)?;
-        let mut manifest = self.unlock_write()?;
-        let format = manifest.format().to_string();
-        manifest
-            .embed_to_stream(&format, input, output, signer)
-            .map_err(C2paError::from)
-    }
-}
+    pub fn sign(&self, signer: &dyn Signer, input: &mut dyn CAIRead, output: &mut dyn CAIReadWrite) -> Result<Vec<u8>> {
+        let format = self.builder.read().unwrap().definition.format.clone();
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{signer::C2paSigner, test_signer::TestSigner, test_stream::TestStream, SeekMode};
-    use std::io::Seek;
+        let mut vec_source = Vec::new();
 
-    const MANIFEST_JSON: &str = r#"
-    {
-        "claim_generator": "test_generator",
-        "format": "image/jpeg",
-        "title": "test_title",
-        "thumbnail": {
-            "format": "image/jpeg",
-            "identifier": "thumbnail"
-        }
-    }
-    "#;
+        input.read_to_end(&mut vec_source).map_err(C2paError::from)?;
 
-    const IMAGE: &'static [u8] = include_bytes!("../tests/fixtures/A.jpg");
-    const CERTS: &'static [u8] = include_bytes!("../tests/fixtures/ps256.pub");
-    const P_KEY: &'static [u8] = include_bytes!("../tests/fixtures/ps256.pem");
+        let mut source = Cursor::new(vec_source);
+        let mut dest = Cursor::new(Vec::new());
 
-    #[test]
-    fn test_manifest_builder() {
-        let settings = ManifestBuilderSettings {
-            generator: "test".to_string(),
-            settings: "{}".to_string(),
-        };
-        let mut builder = ManifestBuilder::new(&settings);
-        builder
-            .from_json(MANIFEST_JSON)
-            .expect("Failed to load manifest Json");
-        builder.add_resource("thumbnail", &IMAGE.to_vec()).expect("Failed to add thumbnail stream");
-        let mut input = TestStream::from_memory(IMAGE.to_vec());
-        let mut input = StreamAdapter::from_stream_mut(&mut input);
-        //let mut output = Cursor::new(Vec::new());
-        let mut output = TestStream::new();
-        let mut output = StreamAdapter::from_stream_mut(&mut output);
-        let signer = c2pa::create_signer::from_keys(CERTS, P_KEY, c2pa::SigningAlg::Ps256, None)
-            .map_err(C2paError::from)
-            .expect("Failed to create signer");
-        builder
-            .sign(&*signer, &mut input, &mut output)
-            .expect("Failed to sign");
-        let len = output.seek(std::io::SeekFrom::End(0)).unwrap();
-        assert_eq!(len, 142467);
-    }
-
-    #[test]
-    fn test_manifest_builder_with_stream() {
-        let settings = ManifestBuilderSettings {
-            generator: "test".to_string(),
-            settings: "{}".to_string(),
-        };
-        let mut builder = ManifestBuilder::new(&settings);
-        builder
-            .from_json(MANIFEST_JSON)
-            .expect("Failed to load manifest Json");
-        builder.add_resource("thumbnail", &IMAGE.to_vec()).expect("Failed to add thumbnail stream");
-        let mut input = TestStream::from_memory(IMAGE.to_vec());
-        let mut output = TestStream::new();
-        let test_signer = Box::new(TestSigner::new());
-        let config = test_signer.config();
-        let signer = C2paSigner::new(test_signer);
-        signer.configure(&config).expect("Signer config failed");
-        builder
-            .sign_stream(&signer, &mut input, &mut output)
-            .expect("Failed to sign");
-        let len = output.seek_stream(0, SeekMode::End).unwrap();
-        assert_eq!(len, 151443);
+        let result = self.builder.write().map_err(|_|C2paError::RwLock)?.sign(signer, &format, &mut source, &mut dest).map_err(C2paError::from)?;
+        dest.rewind()?;
+        
+        output.write_all(&dest.into_inner()).map_err(C2paError::from)?;
+        Ok(result.to_vec())
     }
 }

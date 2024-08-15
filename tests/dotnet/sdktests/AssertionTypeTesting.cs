@@ -121,7 +121,7 @@ namespace sdktests
 
             string json = assertion.ToJson();
 
-            var result = Assertion.FromJson<CustomAssertion>(json);
+            var result = Assertion.FromJson<Assertion>(json);
 
             // Assert
 
@@ -145,7 +145,7 @@ namespace sdktests
             // Act
             string json = assertion.ToJson();
 
-            var result = Assertion.FromJson<CustomAssertion>(json);
+            var result = Assertion.FromJson<Assertion>(json);
 
             // Assert
 
@@ -192,14 +192,14 @@ namespace sdktests
             // Arrange
             TestUtils.KeyVaultSigner signer = new(_credentials);
 
-            ManifestBuilder builder = new(ManifestBuilder.CreateBuilderSettings("Testing Multi Assertions"), signer);
+            ManifestBuilder builder = new(ManifestBuilder.CreateBuilderSettings("Testing Multi Assertions"), signer, new ManifestDefinition());
             builder.SetTitle("Testing Multi Assertions");
             builder.SetFormat("jpg");
             builder.AddAssertion(new ActionAssertion(new() { Actions = { new C2paAction("Some Action", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"), "Some Software Agent", "Some Changed", "u11245151") } }));
             builder.AddAssertion(new CreativeWorkAssertion(new("Test Context", "Creation", [new("Person", "Isaiah"), new("System", "Test Signer")])));
 
             // Act
-            string json = builder.GetManifestDefinition().ToJson();
+            string json = builder.GetBuilderDefinition();
 
             var manifest = ManifestDefinition.FromJson(json);
 
