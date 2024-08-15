@@ -1,21 +1,21 @@
 using System.Net;
 using System.Text;
-using Azure;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using C2pa;
+using Azure;
 
 namespace Isaiah.DemoVerify
 {
-    public class verify_file
+    public class FileVerifier
     {
 
         private static HttpClient sharedClient = new HttpClient();
 
-        private readonly ILogger<verify_file> _logger;
+        private readonly ILogger<FileVerifier> _logger;
 
-        public verify_file(ILogger<verify_file> logger)
+        public FileVerifier(ILogger<FileVerifier> logger)
         {
             _logger = logger;
         }
@@ -23,65 +23,60 @@ namespace Isaiah.DemoVerify
         [Function("verify_file")]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext executionContext)
         {
-            string? url = req.Query["image_url"];
-
+            string? url = req.Query["url"];
             HttpResponseData response;
 
             if (string.IsNullOrEmpty(url))
             {
                 response = req.CreateResponse(HttpStatusCode.BadRequest);
-                await response.WriteStringAsync("Expected a query parameter named 'image_url' with a valid URL. Ex: ?image_url=https://example.com/image.jpg");
+                await response.WriteStringAsync("Expected a query parameter named 'url' with a valid URL. Ex: ?url=https://example.com/image.jpg");
                 return response;
             }
 
             if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
             {
                 response = req.CreateResponse(HttpStatusCode.BadRequest);
-                await response.WriteStringAsync("The 'image_url' query parameter must be a valid URL. Ex: ?image_url=https://example.com/image.jpg");
-                return response;
-            }
-
-            byte[] imageResponse;
-            try
-            {
-                imageResponse = await sharedClient.GetByteArrayAsync(url);
-                string decodedString = Encoding.UTF8.GetString(imageResponse);
-                if (decodedString.Contains("html"))
-                {
-                    response = req.CreateResponse(HttpStatusCode.BadRequest);
-                    await response.WriteStringAsync("Failed to download image from URL: The URL provided does not point to an image file. Be sure to use the image url directly.");
-                    return response;
-                }
-            }
-            catch (Exception e)
-            {
-                response = req.CreateResponse(HttpStatusCode.BadRequest);
-                await response.WriteStringAsync("Failed to download image from URL: " + e.Message);
+                await response.WriteStringAsync("The 'url' query parameter must be a valid URL. Ex: ?url=https://example.com/image.jpg");
                 return response;
             }
 
             string filename = Path.GetTempFileName();
-
-            using Stream fstream = new FileStream(filename, FileMode.Open, FileAccess.Write);
-            await fstream.WriteAsync(imageResponse, 0, imageResponse.Length);
-            fstream.Close();
-
-            ManifestStoreReader manifestStoreReader = new ManifestStoreReader();
-            ManifestStore? manifestStore = manifestStoreReader.ReadFromFile(filename);
-
-            if (manifestStore == null || manifestStore.Manifests[manifestStore.ActiveManifest] == null)
+            try
             {
-                response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "application/json");
-                await response.WriteStringAsync("{\"error\": \"No manifest was found on the image\"}");
-                return response;
+                var imageResponse = await sharedClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                // var contentType = imageResponse.Content.Headers.GetValues("Content-Type").Single();
+                // var format = contentType.Substring(contentType.LastIndexOf('/') + 1);
+
+                using (var fstream = File.OpenWrite(filename))
+                {
+                    await imageResponse.Content.CopyToAsync(fstream);
+                }
+
+                var manifestStoreReader = new ManifestStoreReader();
+                var manifestStore = manifestStoreReader.ReadJsonFromFile(filename);
+
+                if (manifestStore == null)
+                {
+                    response = req.CreateResponse(HttpStatusCode.OK);
+                    await response.WriteAsJsonAsync<object>(null);
+                }
+                else
+                {
+                    response = req.CreateResponse(HttpStatusCode.OK);
+                    response.Headers.Add("Content-Type", "application/json");
+                    await response.WriteStringAsync(manifestStore);
+                }
+
             }
-
-            Manifest manifest = manifestStore.Manifests[manifestStore.ActiveManifest];
-
-            response = req.CreateResponse(HttpStatusCode.OK);
-            response.Headers.Add("Content-Type", "application/json");
-            await response.WriteStringAsync(manifest.GetManifestJson());
+            catch (Exception e)
+            {
+                response = req.CreateResponse(HttpStatusCode.BadRequest);
+                await response.WriteStringAsync("Failed to download image from URL: " + e.ToString());
+            }
+            finally
+            {
+                File.Delete(filename);
+            }
 
             return response;
         }
