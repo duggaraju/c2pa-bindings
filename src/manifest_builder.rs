@@ -21,12 +21,6 @@ impl ManifestBuilder {
         Ok(builder)
     }
 
-    pub fn get_definition(&self) -> Result<String> {
-        let definition = &self.builder.read().map_err(|_|C2paError::RwLock)?.definition;
-        let defintion_string = serde_json::to_string(&definition).expect("{}");
-        Ok(defintion_string)
-    }
-
     pub fn get_thumbnail_url(&self) -> Result<Option<String>> {
         let thumbnail_url = self.builder.read().map_err(|_|C2paError::RwLock)?.definition.thumbnail.as_ref().map(|t| t.identifier.clone());
         Ok(thumbnail_url)

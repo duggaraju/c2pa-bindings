@@ -79,12 +79,6 @@ namespace C2pa
             return _definition;
         }
 
-        public unsafe string GetBuilderDefinition()
-        {
-            string defintion = Utils.FromCString(c2pa.C2paGetBuilderDefinition(_builder));
-            return defintion;
-        }
-
         public void SetManifestDefinition(ManifestDefinition manifest)
         {
             _definition = manifest;

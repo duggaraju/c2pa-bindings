@@ -199,7 +199,7 @@ namespace sdktests
             builder.AddAssertion(new CreativeWorkAssertion(new("Test Context", "Creation", [new("Person", "Isaiah"), new("System", "Test Signer")])));
 
             // Act
-            string json = builder.GetBuilderDefinition();
+            string json = builder.GetManifestDefinition().ToJson();
 
             var manifest = ManifestDefinition.FromJson(json);
 
