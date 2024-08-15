@@ -1,12 +1,10 @@
 using System.Net;
-using System.Text;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using C2pa;
-using Azure;
 
-namespace Isaiah.DemoVerify
+namespace ContentCredentialSigner
 {
     public class FileVerifier
     {
